@@ -7,6 +7,6 @@ export class AppController {
 
   @Post('projects/:id/events')
   handleEvents(@Param('id') id: string, @Body() event: any) {
-    this.appService.handleEvents(Number(id), event.payload.contact);
+    this.appService.handleEvents(Number(id), event);
   }
 }

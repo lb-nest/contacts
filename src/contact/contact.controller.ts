@@ -9,6 +9,7 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
+import { OnEvent } from '@nestjs/event-emitter';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { ContactService } from './contact.service';
 import { AddTagDto } from './dto/add-tag.dto';
@@ -19,10 +20,18 @@ import { UpdateContactDto } from './dto/update-contact.dto';
 export class ContactController {
   constructor(private readonly contactService: ContactService) {}
 
-  @UseGuards(JwtAuthGuard)
-  @Post()
-  create(@Req() req: any, @Body() createContactDto: CreateContactDto) {
-    return this.contactService.create(req.user.project.id, createContactDto);
+  // TODO: не нужен?
+  // новый чат будет создаваться в сервисе сообщений
+  // и данные о нем будут прилетать по верхуку
+  // @UseGuards(JwtAuthGuard)
+  // @Post()
+  // create(@Req() req: any, @Body() createContactDto: CreateContactDto) {
+  //   return this.contactService.create(req.user.project.id, createContactDto);
+  // }
+
+  @OnEvent('newContactFromMessagingService')
+  async create(projectId: number, createContactDto: CreateContactDto) {
+    await this.contactService.create(projectId, createContactDto);
   }
 
   @UseGuards(JwtAuthGuard)
@@ -79,12 +88,12 @@ export class ContactController {
 
   @UseGuards(JwtAuthGuard)
   @Delete(':id/tags/:tagId')
-  addDelete(
+  delTag(
     @Req() req: any,
     @Param('id') id: string,
     @Param('tagId') tagId: string,
   ) {
-    return this.contactService.deleteTag(
+    return this.contactService.delTag(
       req.user.project.id,
       Number(id),
       Number(tagId),
