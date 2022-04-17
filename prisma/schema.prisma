@@ -1,0 +1,77 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum ContactStatus {
+  Opened
+  Closed
+}
+
+model Contact {
+  id         Int           @id @default(autoincrement())
+  projectId  Int
+  username   String
+  name       String
+  avatarUrl  String?
+  notes      String        @default("")
+  status     ContactStatus
+  assignedTo Int?
+  history    History[]
+  tags       ContactTag[]
+
+  @@unique([projectId, id])
+}
+
+enum HistoryEventType {
+  Created
+  Accepted
+  Returned
+  Closed
+  Reopened
+  Transferred
+  UsernameChanged
+  NameChanged
+  NotesChanged
+  TagsChanged
+}
+
+model History {
+  id        Int              @id @default(autoincrement())
+  contactId Int
+  contact   Contact          @relation(fields: [contactId], references: [id])
+  eventType HistoryEventType
+  payload   Json?
+}
+
+model Tag {
+  id          Int          @id @default(autoincrement())
+  projectId   Int
+  name        String
+  description String       @default("")
+  color       String
+  parentId    Int?
+  parent      Tag?         @relation("parentAndChildren", fields: [parentId], references: [id])
+  children    Tag[]        @relation("parentAndChildren")
+  contacts    ContactTag[]
+
+  @@unique([projectId, id])
+}
+
+model ContactTag {
+  tagId     Int
+  tag       Tag     @relation(fields: [tagId], references: [id])
+  contactId Int
+  contact   Contact @relation(fields: [contactId], references: [id])
+
+  @@unique([tagId, contactId])
+  @@index([tagId])
+  @@index([contactId])
+}
