@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { OnEvent } from '@nestjs/event-emitter';
 import { ContactStatus, HistoryEventType } from '@prisma/client';
 import { PrismaService } from 'src/prisma.service';
 import { AddTagDto } from './dto/add-tag.dto';
@@ -9,8 +10,9 @@ import { UpdateContactDto } from './dto/update-contact.dto';
 export class ContactService {
   constructor(private readonly prismaService: PrismaService) {}
 
-  create(projectId: number, createContactDto: CreateContactDto) {
-    return this.prismaService.contact.create({
+  @OnEvent('newContactFromMessagingService')
+  async create(projectId: number, createContactDto: CreateContactDto) {
+    return await this.prismaService.contact.create({
       data: {
         projectId,
         ...createContactDto,
