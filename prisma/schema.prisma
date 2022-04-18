@@ -25,6 +25,8 @@ model Contact {
   notes      String        @default("")
   status     ContactStatus
   assignedTo Int?
+  // priority   Int           @default(3)
+  // resolved   Boolean       @default(false)
   history    History[]
   tags       ContactTag[]
 
@@ -50,6 +52,8 @@ model History {
   contact   Contact          @relation(fields: [contactId], references: [id])
   eventType HistoryEventType
   payload   Json?
+  // crearedAt DateTime         @default(now())
+  // updatedAt DateTime         @updatedAt
 }
 
 model Tag {
@@ -62,6 +66,8 @@ model Tag {
   parent      Tag?         @relation("parentAndChildren", fields: [parentId], references: [id])
   children    Tag[]        @relation("parentAndChildren")
   contacts    ContactTag[]
+  // createdAt   DateTime     @default(now())
+  // updatedAt   DateTime     @updatedAt
 
   @@unique([projectId, id])
 }

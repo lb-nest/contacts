@@ -1,7 +1,15 @@
-import { IsHexColor, IsInt, IsOptional, IsString } from 'class-validator';
+import { Transform, TransformFnParams } from 'class-transformer';
+import {
+  IsHexColor,
+  IsInt,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 
 export class CreateTagDto {
-  @IsString()
+  @IsNotEmpty()
+  @Transform(({ value }: TransformFnParams) => value.trim())
   name: string;
 
   @IsOptional()

@@ -1,13 +1,22 @@
-import { IsInt, IsOptional, IsString, IsUrl } from 'class-validator';
+import { Transform, TransformFnParams } from 'class-transformer';
+import {
+  IsInt,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  IsUrl,
+} from 'class-validator';
 
 export class CreateContactDto {
   @IsInt()
   chatId: number;
 
-  @IsString()
+  @IsNotEmpty()
+  @Transform(({ value }: TransformFnParams) => value.trim())
   username: string;
 
-  @IsString()
+  @IsNotEmpty()
+  @Transform(({ value }: TransformFnParams) => value.trim())
   name: string;
 
   @IsOptional()
