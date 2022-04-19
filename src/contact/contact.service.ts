@@ -9,7 +9,7 @@ import { UpdateContactDto } from './dto/update-contact.dto';
 export class ContactService {
   constructor(private readonly prismaService: PrismaService) {}
 
-  create(projectId: number, createContactDto: CreateContactDto) {
+  async create(projectId: number, createContactDto: CreateContactDto) {
     return this.prismaService.contact.create({
       data: {
         projectId,
@@ -23,6 +23,7 @@ export class ContactService {
       },
       select: {
         id: true,
+        chatId: true,
         username: true,
         name: true,
         avatarUrl: true,
@@ -32,13 +33,17 @@ export class ContactService {
     });
   }
 
-  findAll(projectId: number) {
+  async findAll(projectId: number, chatIds?: number[]) {
     return this.prismaService.contact.findMany({
       where: {
         projectId,
+        chatId: {
+          in: chatIds,
+        },
       },
       select: {
         id: true,
+        chatId: true,
         username: true,
         name: true,
         avatarUrl: true,
@@ -48,7 +53,7 @@ export class ContactService {
     });
   }
 
-  findOne(projectId: number, id: number) {
+  async findOne(projectId: number, id: number) {
     return this.prismaService.contact.findUnique({
       where: {
         projectId_id: {
@@ -58,6 +63,7 @@ export class ContactService {
       },
       select: {
         id: true,
+        chatId: true,
         username: true,
         name: true,
         avatarUrl: true,
@@ -67,7 +73,11 @@ export class ContactService {
     });
   }
 
-  update(projectId: number, id: number, updateContactDto: UpdateContactDto) {
+  async update(
+    projectId: number,
+    id: number,
+    updateContactDto: UpdateContactDto,
+  ) {
     return this.prismaService.contact.update({
       where: {
         projectId_id: {
@@ -88,6 +98,7 @@ export class ContactService {
       },
       select: {
         id: true,
+        chatId: true,
         username: true,
         name: true,
         avatarUrl: true,
@@ -97,7 +108,7 @@ export class ContactService {
     });
   }
 
-  delete(projectId: number, id: number) {
+  async delete(projectId: number, id: number) {
     return this.prismaService.contact.delete({
       where: {
         projectId_id: {
@@ -107,6 +118,7 @@ export class ContactService {
       },
       select: {
         id: true,
+        chatId: true,
         username: true,
         name: true,
         avatarUrl: true,
@@ -116,7 +128,7 @@ export class ContactService {
     });
   }
 
-  getTags(projectId: number, id: number) {
+  async getTags(projectId: number, id: number) {
     return this.prismaService.tag.findMany({
       where: {
         contacts: {

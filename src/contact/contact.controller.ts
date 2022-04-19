@@ -6,11 +6,12 @@ import {
   Param,
   Patch,
   Post,
-  Req,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { User } from 'src/auth/user.decorator';
 import { ContactService } from './contact.service';
 import { AddTagDto } from './dto/add-tag.dto';
 import { CreateContactDto } from './dto/create-contact.dto';
@@ -20,41 +21,35 @@ import { UpdateContactDto } from './dto/update-contact.dto';
 export class ContactController {
   constructor(private readonly contactService: ContactService) {}
 
-  // TODO: не нужен?
-  // новый чат будет создаваться в сервисе сообщений
-  // и данные о нем будут прилетать по верхуку
-  // @UseGuards(JwtAuthGuard)
-  // @Post()
-  // create(@Req() req: any, @Body() createContactDto: CreateContactDto) {
-  //   return this.contactService.create(req.user.project.id, createContactDto);
-  // }
-
-  @OnEvent('newContactFromMessagingService')
+  @OnEvent('newContact')
   async create(projectId: number, createContactDto: CreateContactDto) {
     await this.contactService.create(projectId, createContactDto);
   }
 
   @UseGuards(JwtAuthGuard)
   @Get()
-  findAll(@Req() req: any) {
-    return this.contactService.findAll(req.user.project.id);
+  findAll(@User() user: any, @Query('chatIds') chatIds?: string) {
+    return this.contactService.findAll(
+      user.project.id,
+      chatIds?.split(',').map(Number),
+    );
   }
 
   @UseGuards(JwtAuthGuard)
   @Get(':id')
-  findOne(@Req() req: any, @Param('id') id: string) {
-    return this.contactService.findOne(req.user.project.id, Number(id));
+  findOne(@User() user: any, @Param('id') id: string) {
+    return this.contactService.findOne(user.project.id, Number(id));
   }
 
   @UseGuards(JwtAuthGuard)
   @Patch(':id')
   update(
-    @Req() req: any,
+    @User() user: any,
     @Param('id') id: string,
     @Body() updateContactDto: UpdateContactDto,
   ) {
     return this.contactService.update(
-      req.user.project.id,
+      user.project.id,
       Number(id),
       updateContactDto,
     );
@@ -62,39 +57,35 @@ export class ContactController {
 
   @UseGuards(JwtAuthGuard)
   @Delete(':id')
-  delete(@Req() req: any, @Param('id') id: string) {
-    return this.contactService.delete(req.user.project.id, Number(id));
+  delete(@User() user: any, @Param('id') id: string) {
+    return this.contactService.delete(user.project.id, Number(id));
   }
 
   @UseGuards(JwtAuthGuard)
   @Get(':id/tags')
-  getTags(@Req() req: any, @Param('id') id: string) {
-    return this.contactService.getTags(req.user.project.id, Number(id));
+  getTags(@User() user: any, @Param('id') id: string) {
+    return this.contactService.getTags(user.project.id, Number(id));
   }
 
   @UseGuards(JwtAuthGuard)
   @Post(':id/tags')
   addTag(
-    @Req() req: any,
+    @User() user: any,
     @Param('id') id: string,
     @Body() addTagDto: AddTagDto,
   ) {
-    return this.contactService.addTag(
-      req.user.project.id,
-      Number(id),
-      addTagDto,
-    );
+    return this.contactService.addTag(user.project.id, Number(id), addTagDto);
   }
 
   @UseGuards(JwtAuthGuard)
   @Delete(':id/tags/:tagId')
   delTag(
-    @Req() req: any,
+    @User() user: any,
     @Param('id') id: string,
     @Param('tagId') tagId: string,
   ) {
     return this.contactService.delTag(
-      req.user.project.id,
+      user.project.id,
       Number(id),
       Number(tagId),
     );
