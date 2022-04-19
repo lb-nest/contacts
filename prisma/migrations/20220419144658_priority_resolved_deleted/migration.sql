@@ -1,0 +1,4 @@
+-- AlterTable
+ALTER TABLE `contact` ADD COLUMN `deleted` BOOLEAN NOT NULL DEFAULT false,
+    ADD COLUMN `priority` INTEGER NOT NULL DEFAULT 3,
+    ADD COLUMN `resolved` BOOLEAN NOT NULL DEFAULT false;

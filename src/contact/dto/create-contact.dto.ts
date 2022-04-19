@@ -9,6 +9,9 @@ import {
 
 export class CreateContactDto {
   @IsInt()
+  projectId: number;
+
+  @IsInt()
   chatId: number;
 
   @IsNotEmpty()

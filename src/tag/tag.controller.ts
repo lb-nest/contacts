@@ -20,25 +20,25 @@ export class TagController {
 
   @UseGuards(JwtAuthGuard)
   @Post()
-  async create(@User() user: any, @Body() createTagDto: CreateTagDto) {
+  create(@User() user: any, @Body() createTagDto: CreateTagDto) {
     return this.tagService.create(user.project.id, createTagDto);
   }
 
   @UseGuards(JwtAuthGuard)
   @Get()
-  async findAll(@User() user: any) {
+  findAll(@User() user: any) {
     return this.tagService.findAll(user.project.id);
   }
 
   @UseGuards(JwtAuthGuard)
   @Get(':id')
-  async findOne(@User() user: any, @Param('id') id: string) {
+  findOne(@User() user: any, @Param('id') id: string) {
     return this.tagService.findOne(user.project.id, Number(id));
   }
 
   @UseGuards(JwtAuthGuard)
   @Patch(':id')
-  async update(
+  update(
     @User() user: any,
     @Param('id') id: string,
     @Body() updateTagDto: UpdateTagDto,
@@ -48,7 +48,7 @@ export class TagController {
 
   @UseGuards(JwtAuthGuard)
   @Delete(':id')
-  async remove(@User() user: any, @Param('id') id: string) {
+  delete(@User() user: any, @Param('id') id: string) {
     return this.tagService.delete(user.project.id, Number(id));
   }
 }

@@ -9,12 +9,11 @@ import { UpdateContactDto } from './dto/update-contact.dto';
 export class ContactService {
   constructor(private readonly prismaService: PrismaService) {}
 
-  async create(projectId: number, createContactDto: CreateContactDto) {
+  async create(createContactDto: CreateContactDto) {
     return this.prismaService.contact.create({
       data: {
-        projectId,
-        ...createContactDto,
         status: ContactStatus.Opened,
+        ...createContactDto,
         history: {
           create: {
             eventType: HistoryEventType.Created,
@@ -29,6 +28,23 @@ export class ContactService {
         avatarUrl: true,
         status: true,
         assignedTo: true,
+        notes: true,
+        priority: true,
+        resolved: true,
+        tags: {
+          select: {
+            tag: {
+              select: {
+                id: true,
+                name: true,
+                description: true,
+                color: true,
+                createdAt: true,
+                updatedAt: true,
+              },
+            },
+          },
+        },
       },
     });
   }
@@ -49,6 +65,23 @@ export class ContactService {
         avatarUrl: true,
         status: true,
         assignedTo: true,
+        notes: true,
+        priority: true,
+        resolved: true,
+        tags: {
+          select: {
+            tag: {
+              select: {
+                id: true,
+                name: true,
+                description: true,
+                color: true,
+                createdAt: true,
+                updatedAt: true,
+              },
+            },
+          },
+        },
       },
     });
   }
@@ -69,6 +102,23 @@ export class ContactService {
         avatarUrl: true,
         status: true,
         assignedTo: true,
+        notes: true,
+        priority: true,
+        resolved: true,
+        tags: {
+          select: {
+            tag: {
+              select: {
+                id: true,
+                name: true,
+                description: true,
+                color: true,
+                createdAt: true,
+                updatedAt: true,
+              },
+            },
+          },
+        },
       },
     });
   }
@@ -78,6 +128,8 @@ export class ContactService {
     id: number,
     updateContactDto: UpdateContactDto,
   ) {
+    const { tags, ...data } = updateContactDto;
+
     return this.prismaService.contact.update({
       where: {
         projectId_id: {
@@ -86,7 +138,12 @@ export class ContactService {
         },
       },
       data: {
-        ...updateContactDto,
+        ...data,
+        tags: {
+          createMany: {
+            data: tags?.map((tagId) => ({ tagId })),
+          },
+        },
         history: {
           createMany: {
             data: Object.entries(updateContactDto).map(([key, val]) => ({
@@ -104,6 +161,23 @@ export class ContactService {
         avatarUrl: true,
         status: true,
         assignedTo: true,
+        notes: true,
+        priority: true,
+        resolved: true,
+        tags: {
+          select: {
+            tag: {
+              select: {
+                id: true,
+                name: true,
+                description: true,
+                color: true,
+                createdAt: true,
+                updatedAt: true,
+              },
+            },
+          },
+        },
       },
     });
   }
@@ -124,6 +198,23 @@ export class ContactService {
         avatarUrl: true,
         status: true,
         assignedTo: true,
+        notes: true,
+        priority: true,
+        resolved: true,
+        tags: {
+          select: {
+            tag: {
+              select: {
+                id: true,
+                name: true,
+                description: true,
+                color: true,
+                createdAt: true,
+                updatedAt: true,
+              },
+            },
+          },
+        },
       },
     });
   }
@@ -213,6 +304,9 @@ export class ContactService {
 
       case 'notes':
         return HistoryEventType.NotesChanged;
+
+      case 'tags':
+        return HistoryEventType.TagsChanged;
     }
   }
 }

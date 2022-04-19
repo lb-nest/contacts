@@ -9,7 +9,6 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { OnEvent } from '@nestjs/event-emitter';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { User } from 'src/auth/user.decorator';
 import { ContactService } from './contact.service';
@@ -21,9 +20,11 @@ import { UpdateContactDto } from './dto/update-contact.dto';
 export class ContactController {
   constructor(private readonly contactService: ContactService) {}
 
-  @OnEvent('newContact')
-  async create(projectId: number, createContactDto: CreateContactDto) {
-    await this.contactService.create(projectId, createContactDto);
+  // TODO: Использовать аутентификацию на основе токенов сервисов
+  // @UseGuards(JwtAuthGuard)
+  @Post()
+  create(@Body() createContactDto: CreateContactDto) {
+    return this.contactService.create(createContactDto);
   }
 
   @UseGuards(JwtAuthGuard)

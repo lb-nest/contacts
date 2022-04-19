@@ -24,6 +24,8 @@ export class TagService {
             name: true,
             description: true,
             color: true,
+            createdAt: true,
+            updatedAt: true,
           },
         },
         children: {
@@ -32,8 +34,12 @@ export class TagService {
             name: true,
             description: true,
             color: true,
+            createdAt: true,
+            updatedAt: true,
           },
         },
+        createdAt: true,
+        updatedAt: true,
       },
     });
   }
@@ -54,6 +60,8 @@ export class TagService {
             name: true,
             description: true,
             color: true,
+            createdAt: true,
+            updatedAt: true,
           },
         },
         children: {
@@ -62,8 +70,12 @@ export class TagService {
             name: true,
             description: true,
             color: true,
+            createdAt: true,
+            updatedAt: true,
           },
         },
+        createdAt: true,
+        updatedAt: true,
       },
     });
   }
@@ -87,6 +99,8 @@ export class TagService {
             name: true,
             description: true,
             color: true,
+            createdAt: true,
+            updatedAt: true,
           },
         },
         children: {
@@ -95,8 +109,12 @@ export class TagService {
             name: true,
             description: true,
             color: true,
+            createdAt: true,
+            updatedAt: true,
           },
         },
+        createdAt: true,
+        updatedAt: true,
       },
     });
   }
@@ -125,6 +143,8 @@ export class TagService {
             name: true,
             description: true,
             color: true,
+            createdAt: true,
+            updatedAt: true,
           },
         },
         children: {
@@ -133,8 +153,12 @@ export class TagService {
             name: true,
             description: true,
             color: true,
+            createdAt: true,
+            updatedAt: true,
           },
         },
+        createdAt: true,
+        updatedAt: true,
       },
     });
   }

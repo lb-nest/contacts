@@ -25,8 +25,9 @@ model Contact {
   notes      String        @default("")
   status     ContactStatus
   assignedTo Int?
-  // priority   Int           @default(3)
-  // resolved   Boolean       @default(false)
+  priority   Int           @default(3)
+  resolved   Boolean       @default(false)
+  deleted    Boolean       @default(false)
   history    History[]
   tags       ContactTag[]
 
@@ -52,8 +53,8 @@ model History {
   contact   Contact          @relation(fields: [contactId], references: [id])
   eventType HistoryEventType
   payload   Json?
-  // crearedAt DateTime         @default(now())
-  // updatedAt DateTime         @updatedAt
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
 }
 
 model Tag {
@@ -63,18 +64,18 @@ model Tag {
   description String       @default("")
   color       String
   parentId    Int?
-  parent      Tag?         @relation("parentAndChildren", fields: [parentId], references: [id])
+  parent      Tag?         @relation("parentAndChildren", fields: [parentId], references: [id], onDelete: SetNull)
   children    Tag[]        @relation("parentAndChildren")
   contacts    ContactTag[]
-  // createdAt   DateTime     @default(now())
-  // updatedAt   DateTime     @updatedAt
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
 
   @@unique([projectId, id])
 }
 
 model ContactTag {
   tagId     Int
-  tag       Tag     @relation(fields: [tagId], references: [id])
+  tag       Tag     @relation(fields: [tagId], references: [id], onDelete: Cascade)
   contactId Int
   contact   Contact @relation(fields: [contactId], references: [id])
 
