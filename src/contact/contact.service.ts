@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { ContactStatus, HistoryEventType } from '@prisma/client';
 import { PrismaService } from 'src/prisma.service';
+import { AddHistoryDto } from './dto/add-history.dto';
 import { AddTagDto } from './dto/add-tag.dto';
 import { CreateContactDto } from './dto/create-contact.dto';
 import { UpdateContactDto } from './dto/update-contact.dto';
@@ -130,6 +131,10 @@ export class ContactService {
   ) {
     const { tags, ...data } = updateContactDto;
 
+    const events = Object.entries(updateContactDto).filter(
+      ([key]) => !['assignedTo', 'status'].includes(key),
+    );
+
     return this.prismaService.contact.update({
       where: {
         projectId_id: {
@@ -139,19 +144,24 @@ export class ContactService {
       },
       data: {
         ...data,
-        tags: {
+        tags: tags && {
           createMany: {
             data: tags?.map((tagId) => ({ tagId })),
           },
         },
-        history: {
-          createMany: {
-            data: Object.entries(updateContactDto).map(([key, val]) => ({
-              eventType: this.toHistoryEventType(key),
-              payload: val,
-            })),
-          },
-        },
+        history:
+          events.length === 0
+            ? undefined
+            : {
+                createMany: {
+                  data: events.map(([key, val]) => ({
+                    eventType: this.toHistoryEventType(key),
+                    payload: {
+                      [key]: val,
+                    },
+                  })),
+                },
+              },
       },
       select: {
         id: true,
@@ -236,30 +246,41 @@ export class ContactService {
         name: true,
         description: true,
         color: true,
+        createdAt: true,
+        updatedAt: true,
       },
     });
   }
 
   async addTag(projectId: number, id: number, addTagDto: AddTagDto) {
-    const contact = await this.findOne(projectId, id);
-    if (!contact) {
-      throw new NotFoundException();
-    }
-
     return this.prismaService.contactTag.create({
       data: {
-        contactId: contact.id,
-        ...addTagDto,
-      },
-      select: {
         contact: {
-          select: {
-            id: true,
+          connect: {
+            projectId_id: {
+              projectId,
+              id,
+            },
           },
         },
         tag: {
+          connect: {
+            projectId_id: {
+              projectId,
+              id: addTagDto.tagId,
+            },
+          },
+        },
+      },
+      select: {
+        tag: {
           select: {
             id: true,
+            name: true,
+            description: true,
+            color: true,
+            createdAt: true,
+            updatedAt: true,
           },
         },
       },
@@ -280,16 +301,54 @@ export class ContactService {
         },
       },
       select: {
-        contact: {
-          select: {
-            id: true,
-          },
-        },
         tag: {
           select: {
             id: true,
+            name: true,
+            description: true,
+            color: true,
+            createdAt: true,
+            updatedAt: true,
           },
         },
+      },
+    });
+  }
+
+  async getHistory(projectId: number, id: number) {
+    return this.prismaService.history.findMany({
+      where: {
+        contact: {
+          projectId,
+          id,
+        },
+      },
+      select: {
+        id: true,
+        eventType: true,
+        payload: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+  }
+
+  async addHistory(
+    projectId: number,
+    id: number,
+    addHistoryDto: AddHistoryDto,
+  ) {
+    return this.prismaService.history.create({
+      data: {
+        contact: {
+          connect: {
+            projectId_id: {
+              projectId,
+              id,
+            },
+          },
+        },
+        ...addHistoryDto,
       },
     });
   }
