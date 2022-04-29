@@ -38,6 +38,12 @@ export class ContactController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @Get('count')
+  countAll(@User() user: any) {
+    return this.contactService.countAll(user.project.id, user.id);
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Get(':id')
   findOne(@User() user: any, @Param('id') id: string) {
     return this.contactService.findOne(user.project.id, Number(id));

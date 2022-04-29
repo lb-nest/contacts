@@ -87,6 +87,30 @@ export class ContactService {
     });
   }
 
+  async countAll(projectId: number, assignedTo: number) {
+    const [assigned, unassigned] = await this.prismaService.$transaction([
+      this.prismaService.contact.count({
+        where: {
+          projectId,
+          assignedTo,
+          status: ContactStatus.Opened,
+        },
+      }),
+      this.prismaService.contact.count({
+        where: {
+          projectId,
+          assignedTo: null,
+          status: ContactStatus.Opened,
+        },
+      }),
+    ]);
+
+    return {
+      assigned,
+      unassigned,
+    };
+  }
+
   async findOne(projectId: number, id: number) {
     return this.prismaService.contact.findUnique({
       where: {
