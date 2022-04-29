@@ -15,6 +15,7 @@ import { ContactService } from './contact.service';
 import { AddHistoryDto } from './dto/add-history.dto';
 import { AddTagDto } from './dto/add-tag.dto';
 import { CreateContactDto } from './dto/create-contact.dto';
+import { FindContactsDto } from './dto/find-contacts.dto';
 import { UpdateContactDto } from './dto/update-contact.dto';
 
 @Controller('contacts')
@@ -30,10 +31,16 @@ export class ContactController {
 
   @UseGuards(JwtAuthGuard)
   @Get()
-  findAll(@User() user: any, @Query('chatIds') chatIds?: string) {
-    return this.contactService.findAll(
+  findAll(@User() user: any, @Query() query: FindContactsDto) {
+    return this.contactService.findAll(user.project.id, query);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('chatId/:ids')
+  findAllByChatId(@User() user: any, @Param('ids') ids: string) {
+    return this.contactService.findAllByChatId(
       user.project.id,
-      chatIds?.split(',').map(Number),
+      ids.split(',').map(Number),
     );
   }
 

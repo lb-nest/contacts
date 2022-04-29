@@ -4,6 +4,7 @@ import { PrismaService } from 'src/prisma.service';
 import { AddHistoryDto } from './dto/add-history.dto';
 import { AddTagDto } from './dto/add-tag.dto';
 import { CreateContactDto } from './dto/create-contact.dto';
+import { FindContactsDto } from './dto/find-contacts.dto';
 import { UpdateContactDto } from './dto/update-contact.dto';
 
 @Injectable()
@@ -13,7 +14,7 @@ export class ContactService {
   async create(createContactDto: CreateContactDto) {
     return this.prismaService.contact.create({
       data: {
-        status: ContactStatus.Opened,
+        status: ContactStatus.Open,
         ...createContactDto,
         history: {
           create: {
@@ -50,7 +51,42 @@ export class ContactService {
     });
   }
 
-  async findAll(projectId: number, chatIds?: number[]) {
+  async findAll(projectId: number, query: FindContactsDto) {
+    return this.prismaService.contact.findMany({
+      where: {
+        projectId,
+        ...query,
+      },
+      select: {
+        id: true,
+        chatId: true,
+        username: true,
+        name: true,
+        avatarUrl: true,
+        status: true,
+        assignedTo: true,
+        notes: true,
+        priority: true,
+        resolved: true,
+        tags: {
+          select: {
+            tag: {
+              select: {
+                id: true,
+                name: true,
+                description: true,
+                color: true,
+                createdAt: true,
+                updatedAt: true,
+              },
+            },
+          },
+        },
+      },
+    });
+  }
+
+  async findAllByChatId(projectId: number, chatIds: number[]) {
     return this.prismaService.contact.findMany({
       where: {
         projectId,
@@ -93,14 +129,14 @@ export class ContactService {
         where: {
           projectId,
           assignedTo,
-          status: ContactStatus.Opened,
+          status: ContactStatus.Open,
         },
       }),
       this.prismaService.contact.count({
         where: {
           projectId,
           assignedTo: null,
-          status: ContactStatus.Opened,
+          status: ContactStatus.Open,
         },
       }),
     ]);
