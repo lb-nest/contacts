@@ -11,9 +11,13 @@ import { UpdateContactDto } from './dto/update-contact.dto';
 export class ContactService {
   constructor(private readonly prismaService: PrismaService) {}
 
-  async create(createContactDto: CreateContactDto) {
-    return this.prismaService.contact.create({
-      data: {
+  async create(projectId: number, createContactDto: CreateContactDto) {
+    return this.prismaService.contact.upsert({
+      where: {
+        chatId: createContactDto.chatId,
+      },
+      create: {
+        projectId,
         status: ContactStatus.Open,
         ...createContactDto,
         history: {
@@ -22,6 +26,7 @@ export class ContactService {
           },
         },
       },
+      update: {},
       select: {
         id: true,
         chatId: true,

@@ -18,7 +18,7 @@ enum ContactStatus {
 model Contact {
   id         Int           @id @default(autoincrement())
   projectId  Int
-  chatId     Int
+  chatId     Int           @unique
   username   String
   name       String
   avatarUrl  String?

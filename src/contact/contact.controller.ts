@@ -22,11 +22,10 @@ import { UpdateContactDto } from './dto/update-contact.dto';
 export class ContactController {
   constructor(private readonly contactService: ContactService) {}
 
-  // TODO: Использовать аутентификацию на основе токенов сервисов
-  // @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard)
   @Post()
-  create(@Body() createContactDto: CreateContactDto) {
-    return this.contactService.create(createContactDto);
+  create(@User() user: any, @Body() createContactDto: CreateContactDto) {
+    return this.contactService.create(user.project.id, createContactDto);
   }
 
   @UseGuards(JwtAuthGuard)
