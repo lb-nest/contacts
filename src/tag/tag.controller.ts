@@ -7,11 +7,14 @@ import {
   Patch,
   Post,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
+import { Auth } from 'src/auth/auth.decorator';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
-import { User } from 'src/auth/user.decorator';
+import { TransformInterceptor } from 'src/shared/interceptors/transform.interceptor';
 import { CreateTagDto } from './dto/create-tag.dto';
 import { UpdateTagDto } from './dto/update-tag.dto';
+import { Tag } from './entities/tag.entity';
 import { TagService } from './tag.service';
 
 @Controller('tags')
@@ -19,27 +22,31 @@ export class TagController {
   constructor(private readonly tagService: TagService) {}
 
   @UseGuards(JwtAuthGuard)
+  @UseInterceptors(new TransformInterceptor(Tag))
   @Post()
-  create(@User() user: any, @Body() createTagDto: CreateTagDto) {
+  create(@Auth() user: any, @Body() createTagDto: CreateTagDto) {
     return this.tagService.create(user.project.id, createTagDto);
   }
 
   @UseGuards(JwtAuthGuard)
+  @UseInterceptors(new TransformInterceptor(Tag))
   @Get()
-  findAll(@User() user: any) {
+  findAll(@Auth() user: any) {
     return this.tagService.findAll(user.project.id);
   }
 
   @UseGuards(JwtAuthGuard)
+  @UseInterceptors(new TransformInterceptor(Tag))
   @Get(':id')
-  findOne(@User() user: any, @Param('id') id: string) {
+  findOne(@Auth() user: any, @Param('id') id: string) {
     return this.tagService.findOne(user.project.id, Number(id));
   }
 
   @UseGuards(JwtAuthGuard)
+  @UseInterceptors(new TransformInterceptor(Tag))
   @Patch(':id')
   update(
-    @User() user: any,
+    @Auth() user: any,
     @Param('id') id: string,
     @Body() updateTagDto: UpdateTagDto,
   ) {
@@ -47,8 +54,9 @@ export class TagController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @UseInterceptors(new TransformInterceptor(Tag))
   @Delete(':id')
-  delete(@User() user: any, @Param('id') id: string) {
+  delete(@Auth() user: any, @Param('id') id: string) {
     return this.tagService.delete(user.project.id, Number(id));
   }
 }

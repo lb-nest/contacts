@@ -1,17 +1,20 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { ContactStatus, HistoryEventType } from '@prisma/client';
 import { PrismaService } from 'src/prisma.service';
-import { AddHistoryDto } from './dto/add-history.dto';
-import { AddTagDto } from './dto/add-tag.dto';
 import { CreateContactDto } from './dto/create-contact.dto';
 import { FindContactsDto } from './dto/find-contacts.dto';
 import { UpdateContactDto } from './dto/update-contact.dto';
+import { Contact } from './entities/contact.entity';
+import { Count } from './entities/count.entity';
 
 @Injectable()
 export class ContactService {
   constructor(private readonly prismaService: PrismaService) {}
 
-  async create(projectId: number, createContactDto: CreateContactDto) {
+  async create(
+    projectId: number,
+    createContactDto: CreateContactDto,
+  ): Promise<Contact> {
     return this.prismaService.contact.upsert({
       where: {
         chatId: createContactDto.chatId,
@@ -27,29 +30,10 @@ export class ContactService {
         },
       },
       update: {},
-      select: {
-        id: true,
-        chatId: true,
-        username: true,
-        name: true,
-        avatarUrl: true,
-        status: true,
-        assignedTo: true,
-        notes: true,
-        priority: true,
-        resolved: true,
+      include: {
         tags: {
-          select: {
-            tag: {
-              select: {
-                id: true,
-                name: true,
-                description: true,
-                color: true,
-                createdAt: true,
-                updatedAt: true,
-              },
-            },
+          include: {
+            tag: true,
           },
         },
       },
@@ -62,29 +46,10 @@ export class ContactService {
         projectId,
         ...query,
       },
-      select: {
-        id: true,
-        chatId: true,
-        username: true,
-        name: true,
-        avatarUrl: true,
-        status: true,
-        assignedTo: true,
-        notes: true,
-        priority: true,
-        resolved: true,
+      include: {
         tags: {
-          select: {
-            tag: {
-              select: {
-                id: true,
-                name: true,
-                description: true,
-                color: true,
-                createdAt: true,
-                updatedAt: true,
-              },
-            },
+          include: {
+            tag: true,
           },
         },
       },
@@ -99,60 +64,17 @@ export class ContactService {
           in: chatIds,
         },
       },
-      select: {
-        id: true,
-        chatId: true,
-        username: true,
-        name: true,
-        avatarUrl: true,
-        status: true,
-        assignedTo: true,
-        notes: true,
-        priority: true,
-        resolved: true,
+      include: {
         tags: {
-          select: {
-            tag: {
-              select: {
-                id: true,
-                name: true,
-                description: true,
-                color: true,
-                createdAt: true,
-                updatedAt: true,
-              },
-            },
+          include: {
+            tag: true,
           },
         },
       },
     });
   }
 
-  async countAll(projectId: number, assignedTo: number) {
-    const [assigned, unassigned] = await this.prismaService.$transaction([
-      this.prismaService.contact.count({
-        where: {
-          projectId,
-          assignedTo,
-          status: ContactStatus.Open,
-        },
-      }),
-      this.prismaService.contact.count({
-        where: {
-          projectId,
-          assignedTo: null,
-          status: ContactStatus.Open,
-        },
-      }),
-    ]);
-
-    return {
-      assigned,
-      unassigned,
-    };
-  }
-
-  async findOne(projectId: number, id: number) {
+  async findOne(projectId: number, id: number): Promise<Contact> {
     return this.prismaService.contact.findUnique({
       where: {
         projectId_id: {
@@ -160,29 +82,10 @@ export class ContactService {
           id,
         },
       },
-      select: {
-        id: true,
-        chatId: true,
-        username: true,
-        name: true,
-        avatarUrl: true,
-        status: true,
-        assignedTo: true,
-        notes: true,
-        priority: true,
-        resolved: true,
+      include: {
         tags: {
-          select: {
-            tag: {
-              select: {
-                id: true,
-                name: true,
-                description: true,
-                color: true,
-                createdAt: true,
-                updatedAt: true,
-              },
-            },
+          include: {
+            tag: true,
           },
         },
       },
@@ -193,7 +96,7 @@ export class ContactService {
     projectId: number,
     id: number,
     updateContactDto: UpdateContactDto,
-  ) {
+  ): Promise<Contact> {
     const { tags, ...data } = updateContactDto;
 
     const events = Object.entries(updateContactDto).filter(
@@ -228,36 +131,17 @@ export class ContactService {
                 },
               },
       },
-      select: {
-        id: true,
-        chatId: true,
-        username: true,
-        name: true,
-        avatarUrl: true,
-        status: true,
-        assignedTo: true,
-        notes: true,
-        priority: true,
-        resolved: true,
+      include: {
         tags: {
-          select: {
-            tag: {
-              select: {
-                id: true,
-                name: true,
-                description: true,
-                color: true,
-                createdAt: true,
-                updatedAt: true,
-              },
-            },
+          include: {
+            tag: true,
           },
         },
       },
     });
   }
 
-  async delete(projectId: number, id: number) {
+  async delete(projectId: number, id: number): Promise<Contact> {
     return this.prismaService.contact.delete({
       where: {
         projectId_id: {
@@ -265,157 +149,38 @@ export class ContactService {
           id,
         },
       },
-      select: {
-        id: true,
-        chatId: true,
-        username: true,
-        name: true,
-        avatarUrl: true,
-        status: true,
-        assignedTo: true,
-        notes: true,
-        priority: true,
-        resolved: true,
+      include: {
         tags: {
-          select: {
-            tag: {
-              select: {
-                id: true,
-                name: true,
-                description: true,
-                color: true,
-                createdAt: true,
-                updatedAt: true,
-              },
-            },
+          include: {
+            tag: true,
           },
         },
       },
     });
   }
 
-  async getTags(projectId: number, id: number) {
-    return this.prismaService.tag.findMany({
-      where: {
-        contacts: {
-          some: {
-            contact: {
-              projectId,
-              id,
-            },
-          },
-        },
-      },
-      select: {
-        id: true,
-        name: true,
-        description: true,
-        color: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-    });
-  }
-
-  async addTag(projectId: number, id: number, addTagDto: AddTagDto) {
-    return this.prismaService.contactTag.create({
-      data: {
-        contact: {
-          connect: {
-            projectId_id: {
-              projectId,
-              id,
-            },
-          },
-        },
-        tag: {
-          connect: {
-            projectId_id: {
-              projectId,
-              id: addTagDto.tagId,
-            },
-          },
-        },
-      },
-      select: {
-        tag: {
-          select: {
-            id: true,
-            name: true,
-            description: true,
-            color: true,
-            createdAt: true,
-            updatedAt: true,
-          },
-        },
-      },
-    });
-  }
-
-  async delTag(projectId: number, id: number, tagId: number) {
-    const contact = await this.findOne(projectId, id);
-    if (!contact) {
-      throw new NotFoundException();
-    }
-
-    return this.prismaService.contactTag.delete({
-      where: {
-        tagId_contactId: {
-          tagId,
-          contactId: contact.id,
-        },
-      },
-      select: {
-        tag: {
-          select: {
-            id: true,
-            name: true,
-            description: true,
-            color: true,
-            createdAt: true,
-            updatedAt: true,
-          },
-        },
-      },
-    });
-  }
-
-  async getHistory(projectId: number, id: number) {
-    return this.prismaService.history.findMany({
-      where: {
-        contact: {
+  async countAll(projectId: number, assignedTo: number): Promise<Count> {
+    const [assigned, unassigned] = await this.prismaService.$transaction([
+      this.prismaService.contact.count({
+        where: {
           projectId,
-          id,
+          assignedTo,
+          status: ContactStatus.Open,
         },
-      },
-      select: {
-        id: true,
-        eventType: true,
-        payload: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-    });
-  }
+      }),
+      this.prismaService.contact.count({
+        where: {
+          projectId,
+          assignedTo: null,
+          status: ContactStatus.Open,
+        },
+      }),
+    ]);
 
-  async addHistory(
-    projectId: number,
-    id: number,
-    addHistoryDto: AddHistoryDto,
-  ) {
-    return this.prismaService.history.create({
-      data: {
-        contact: {
-          connect: {
-            projectId_id: {
-              projectId,
-              id,
-            },
-          },
-        },
-        ...addHistoryDto,
-      },
-    });
+    return {
+      assigned,
+      unassigned,
+    };
   }
 
   private toHistoryEventType(key: string) {

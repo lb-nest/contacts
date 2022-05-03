@@ -2,85 +2,38 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma.service';
 import { CreateTagDto } from './dto/create-tag.dto';
 import { UpdateTagDto } from './dto/update-tag.dto';
+import { Tag } from './entities/tag.entity';
 
 @Injectable()
 export class TagService {
   constructor(private readonly prismaService: PrismaService) {}
 
-  create(projectId: number, createTagDto: CreateTagDto) {
+  create(projectId: number, createTagDto: CreateTagDto): Promise<Tag> {
     return this.prismaService.tag.create({
       data: {
         projectId,
         ...createTagDto,
       },
-      select: {
-        id: true,
-        name: true,
-        description: true,
-        color: true,
-        parent: {
-          select: {
-            id: true,
-            name: true,
-            description: true,
-            color: true,
-            createdAt: true,
-            updatedAt: true,
-          },
-        },
-        children: {
-          select: {
-            id: true,
-            name: true,
-            description: true,
-            color: true,
-            createdAt: true,
-            updatedAt: true,
-          },
-        },
-        createdAt: true,
-        updatedAt: true,
+      include: {
+        parent: true,
+        children: true,
       },
     });
   }
 
-  findAll(projectId: number) {
+  findAll(projectId: number): Promise<Tag[]> {
     return this.prismaService.tag.findMany({
       where: {
         projectId,
       },
-      select: {
-        id: true,
-        name: true,
-        description: true,
-        color: true,
-        parent: {
-          select: {
-            id: true,
-            name: true,
-            description: true,
-            color: true,
-            createdAt: true,
-            updatedAt: true,
-          },
-        },
-        children: {
-          select: {
-            id: true,
-            name: true,
-            description: true,
-            color: true,
-            createdAt: true,
-            updatedAt: true,
-          },
-        },
-        createdAt: true,
-        updatedAt: true,
+      include: {
+        parent: true,
+        children: true,
       },
     });
   }
 
-  findOne(projectId: number, id: number) {
+  findOne(projectId: number, id: number): Promise<Tag> {
     return this.prismaService.tag.findUnique({
       where: {
         projectId_id: {
@@ -88,38 +41,18 @@ export class TagService {
           id,
         },
       },
-      select: {
-        id: true,
-        name: true,
-        description: true,
-        color: true,
-        parent: {
-          select: {
-            id: true,
-            name: true,
-            description: true,
-            color: true,
-            createdAt: true,
-            updatedAt: true,
-          },
-        },
-        children: {
-          select: {
-            id: true,
-            name: true,
-            description: true,
-            color: true,
-            createdAt: true,
-            updatedAt: true,
-          },
-        },
-        createdAt: true,
-        updatedAt: true,
+      include: {
+        parent: true,
+        children: true,
       },
     });
   }
 
-  update(projectId: number, id: number, updateTagDto: UpdateTagDto) {
+  update(
+    projectId: number,
+    id: number,
+    updateTagDto: UpdateTagDto,
+  ): Promise<Tag> {
     if (id === updateTagDto.parentId) {
       throw new BadRequestException();
     }
@@ -132,38 +65,14 @@ export class TagService {
         },
       },
       data: updateTagDto,
-      select: {
-        id: true,
-        name: true,
-        description: true,
-        color: true,
-        parent: {
-          select: {
-            id: true,
-            name: true,
-            description: true,
-            color: true,
-            createdAt: true,
-            updatedAt: true,
-          },
-        },
-        children: {
-          select: {
-            id: true,
-            name: true,
-            description: true,
-            color: true,
-            createdAt: true,
-            updatedAt: true,
-          },
-        },
-        createdAt: true,
-        updatedAt: true,
+      include: {
+        parent: true,
+        children: true,
       },
     });
   }
 
-  delete(projectId: number, id: number) {
+  delete(projectId: number, id: number): Promise<Tag> {
     return this.prismaService.tag.delete({
       where: {
         projectId_id: {
@@ -171,27 +80,9 @@ export class TagService {
           id,
         },
       },
-      select: {
-        id: true,
-        name: true,
-        description: true,
-        color: true,
-        parent: {
-          select: {
-            id: true,
-            name: true,
-            description: true,
-            color: true,
-          },
-        },
-        children: {
-          select: {
-            id: true,
-            name: true,
-            description: true,
-            color: true,
-          },
-        },
+      include: {
+        parent: true,
+        children: true,
       },
     });
   }
