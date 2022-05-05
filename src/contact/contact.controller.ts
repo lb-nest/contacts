@@ -49,11 +49,11 @@ export class ContactController {
 
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(new TransformInterceptor(Contact))
-  @Get('chatId/:ids')
-  findAllByChatId(@Auth() user: any, @Param('ids') ids: string) {
-    return this.contactService.findAllByChatId(
+  @Get('batch')
+  findAllByChatIds(@Auth() user: any, @Query('chatIds') ids: string) {
+    return this.contactService.findAllByChatIds(
       user.project.id,
-      ids.split(',').map(Number),
+      ids?.split(',').map(Number),
     );
   }
 

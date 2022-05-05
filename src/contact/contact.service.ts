@@ -40,7 +40,7 @@ export class ContactService {
     });
   }
 
-  async findAll(projectId: number, query: FindContactsDto) {
+  async findAll(projectId: number, query: FindContactsDto): Promise<Contact[]> {
     return this.prismaService.contact.findMany({
       where: {
         projectId,
@@ -56,7 +56,10 @@ export class ContactService {
     });
   }
 
-  async findAllByChatId(projectId: number, chatIds: number[]) {
+  async findAllByChatIds(
+    projectId: number,
+    chatIds: number[],
+  ): Promise<Contact[]> {
     return this.prismaService.contact.findMany({
       where: {
         projectId,
