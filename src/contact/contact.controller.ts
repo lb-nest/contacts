@@ -58,6 +58,12 @@ export class ContactController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @Get('count')
+  countAll(@Auth() user: any) {
+    return this.contactService.countAll(user.project.id, user.id);
+  }
+
+  @UseGuards(JwtAuthGuard)
   @UseInterceptors(new TransformInterceptor(Contact))
   @Get(':id')
   findOne(@Auth() user: any, @Param('id') id: string) {
@@ -84,12 +90,6 @@ export class ContactController {
   @Delete(':id')
   delete(@Auth() user: any, @Param('id') id: string) {
     return this.contactService.delete(user.project.id, Number(id));
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Get('count')
-  countAll(@Auth() user: any) {
-    return this.contactService.countAll(user.project.id, user.id);
   }
 
   @UseGuards(JwtAuthGuard)
