@@ -26,9 +26,15 @@ export class Contact {
 
   resolved: boolean;
 
-  @Exclude()
-  deleted: boolean;
-
   @Type(() => Tags)
   tags: Tags[];
+
+  @Exclude()
+  createdAt: Date;
+
+  @Exclude()
+  updatedAt: Date;
+
+  @Exclude()
+  deletedAt: Date;
 }

@@ -29,7 +29,9 @@ export class ContactService {
           },
         },
       },
-      update: {},
+      update: {
+        updatedAt: new Date(),
+      },
       include: {
         tags: {
           include: {
@@ -45,6 +47,9 @@ export class ContactService {
       where: {
         projectId,
         ...query,
+      },
+      orderBy: {
+        updatedAt: 'desc',
       },
       include: {
         tags: {
@@ -145,12 +150,15 @@ export class ContactService {
   }
 
   async delete(projectId: number, id: number): Promise<Contact> {
-    return this.prismaService.contact.delete({
+    return this.prismaService.contact.update({
       where: {
         projectId_id: {
           projectId,
           id,
         },
+      },
+      data: {
+        deletedAt: new Date(),
       },
       include: {
         tags: {

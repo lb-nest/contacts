@@ -27,9 +27,11 @@ model Contact {
   assignedTo Int?
   priority   Int           @default(3)
   resolved   Boolean       @default(false)
-  deleted    Boolean       @default(false)
   history    History[]
   tags       ContactTag[]
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+  deletedAt  DateTime?
 
   @@unique([projectId, id])
 }
