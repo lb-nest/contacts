@@ -30,7 +30,7 @@ export class ContactService {
         },
       },
       update: {
-        updatedAt: new Date(),
+        deletedAt: null,
       },
       include: {
         tags: {
@@ -47,6 +47,7 @@ export class ContactService {
       where: {
         projectId,
         ...query,
+        deletedAt: null,
       },
       orderBy: {
         updatedAt: 'desc',
@@ -71,6 +72,7 @@ export class ContactService {
         chatId: {
           in: chatIds,
         },
+        deletedAt: null,
       },
       include: {
         tags: {
@@ -89,6 +91,7 @@ export class ContactService {
           projectId,
           id,
         },
+        // TODO: deletedAt
       },
       include: {
         tags: {
@@ -117,6 +120,7 @@ export class ContactService {
           projectId,
           id,
         },
+        // TODO: deletedAt
       },
       data: {
         ...data,
@@ -156,6 +160,7 @@ export class ContactService {
           projectId,
           id,
         },
+        // TODO: deletedAt
       },
       data: {
         deletedAt: new Date(),
@@ -177,6 +182,7 @@ export class ContactService {
           projectId,
           assignedTo,
           status: ContactStatus.Open,
+          deletedAt: null,
         },
       }),
       this.prismaService.contact.count({
@@ -184,6 +190,7 @@ export class ContactService {
           projectId,
           assignedTo: null,
           status: ContactStatus.Open,
+          deletedAt: null,
         },
       }),
     ]);
