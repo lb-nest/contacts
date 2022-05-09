@@ -46,6 +46,7 @@ export class ContactService {
     return this.prismaService.contact.findMany({
       where: {
         projectId,
+        assignedTo: null,
         ...query,
         deletedAt: null,
       },
