@@ -1,8 +1,12 @@
-import { Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { ContactStatus, HistoryEventType } from '@prisma/client';
 import { PrismaService } from 'src/prisma.service';
 import { CreateContactDto } from './dto/create-contact.dto';
-import { FindContactsDto } from './dto/find-contacts.dto';
+import { FindAllContactsDto } from './dto/find-all-contacts.dto';
 import { UpdateContactDto } from './dto/update-contact.dto';
 import { Contact } from './entities/contact.entity';
 import { Count } from './entities/count.entity';
@@ -15,93 +19,115 @@ export class ContactService {
     projectId: number,
     createContactDto: CreateContactDto,
   ): Promise<Contact> {
-    return this.prismaService.contact.upsert({
-      where: {
-        chatId: createContactDto.chatId,
-      },
-      create: {
-        projectId,
-        status: ContactStatus.Open,
-        ...createContactDto,
-        history: {
-          create: {
-            eventType: HistoryEventType.Created,
+    try {
+      return await this.prismaService.contact.upsert({
+        where: {
+          chatId: createContactDto.chatId,
+        },
+        create: {
+          projectId,
+          status: ContactStatus.Open,
+          ...createContactDto,
+          history: {
+            create: {
+              eventType: HistoryEventType.Created,
+            },
           },
         },
-      },
-      update: {
-        deletedAt: null,
-      },
-      include: {
-        tags: {
-          include: {
-            tag: true,
+        update: {
+          deletedAt: null,
+        },
+        include: {
+          tags: {
+            include: {
+              tag: true,
+            },
           },
         },
-      },
-    });
+      });
+    } catch (e) {
+      throw new BadRequestException(e);
+    }
   }
 
-  async findAll(projectId: number, query: FindContactsDto): Promise<Contact[]> {
-    return this.prismaService.contact.findMany({
-      where: {
-        projectId,
-        assignedTo: null,
-        ...query,
-        deletedAt: null,
-      },
-      orderBy: {
-        updatedAt: 'desc',
-      },
-      include: {
-        tags: {
-          include: {
-            tag: true,
+  async findAll(
+    projectId: number,
+    query: FindAllContactsDto,
+  ): Promise<Contact[]> {
+    try {
+      return await this.prismaService.contact.findMany({
+        where: {
+          projectId,
+          assignedTo: null,
+          ...query,
+          deletedAt: null,
+        },
+        orderBy: {
+          updatedAt: 'desc',
+        },
+        include: {
+          tags: {
+            include: {
+              tag: true,
+            },
           },
         },
-      },
-    });
+      });
+    } catch (e) {
+      throw new BadRequestException(e);
+    }
   }
 
   async findAllByChatIds(
     projectId: number,
     chatIds: number[],
   ): Promise<Contact[]> {
-    return this.prismaService.contact.findMany({
-      where: {
-        projectId,
-        chatId: {
-          in: chatIds,
+    try {
+      return await this.prismaService.contact.findMany({
+        where: {
+          projectId,
+          chatId: {
+            in: chatIds,
+          },
+          deletedAt: null,
         },
-        deletedAt: null,
-      },
-      include: {
-        tags: {
-          include: {
-            tag: true,
+        include: {
+          tags: {
+            include: {
+              tag: true,
+            },
           },
         },
-      },
-    });
+      });
+    } catch (e) {
+      throw new BadRequestException(e);
+    }
   }
 
   async findOne(projectId: number, id: number): Promise<Contact> {
-    return this.prismaService.contact.findUnique({
-      where: {
-        projectId_id: {
-          projectId,
-          id,
-        },
-        // TODO: deletedAt
-      },
-      include: {
-        tags: {
-          include: {
-            tag: true,
+    const contact = await this.prismaService.contact
+      .findUnique({
+        where: {
+          projectId_id: {
+            projectId,
+            id,
           },
         },
-      },
-    });
+        include: {
+          tags: {
+            include: {
+              tag: true,
+            },
+          },
+        },
+      })
+      .catch(() => undefined);
+
+    if (contact.deletedAt) {
+      throw new NotFoundException();
+    }
+
+    return contact;
   }
 
   async update(
@@ -109,71 +135,72 @@ export class ContactService {
     id: number,
     updateContactDto: UpdateContactDto,
   ): Promise<Contact> {
-    const { tags, ...data } = updateContactDto;
-
-    const events = Object.entries(updateContactDto).filter(
-      ([key]) => !['assignedTo', 'status'].includes(key),
-    );
-
-    return this.prismaService.contact.update({
-      where: {
-        projectId_id: {
-          projectId,
-          id,
-        },
-        // TODO: deletedAt
-      },
-      data: {
-        ...data,
-        tags: tags && {
-          createMany: {
-            data: tags?.map((tagId) => ({ tagId })),
-          },
-        },
-        history:
-          events.length === 0
-            ? undefined
-            : {
-                createMany: {
-                  data: events.map(([key, val]) => ({
-                    eventType: this.toHistoryEventType(key),
-                    payload: {
-                      [key]: val,
-                    },
-                  })),
-                },
-              },
-      },
-      include: {
-        tags: {
-          include: {
-            tag: true,
-          },
-        },
-      },
+    const events = Object.entries(updateContactDto).filter(([property]) => {
+      return ['username', 'name', 'notes'].includes(property);
     });
+
+    await this.findOne(projectId, id);
+    try {
+      return await this.prismaService.contact.update({
+        where: {
+          projectId_id: {
+            projectId,
+            id,
+          },
+        },
+        data: {
+          ...updateContactDto,
+          history:
+            events.length === 0
+              ? undefined
+              : {
+                  createMany: {
+                    data: events.map(([property, value]) => ({
+                      eventType: this.toHistoryEventType(property),
+                      payload: {
+                        [property]: value,
+                      },
+                    })),
+                  },
+                },
+        },
+        include: {
+          tags: {
+            include: {
+              tag: true,
+            },
+          },
+        },
+      });
+    } catch (e) {
+      throw new BadRequestException(e);
+    }
   }
 
   async delete(projectId: number, id: number): Promise<Contact> {
-    return this.prismaService.contact.update({
-      where: {
-        projectId_id: {
-          projectId,
-          id,
-        },
-        // TODO: deletedAt
-      },
-      data: {
-        deletedAt: new Date(),
-      },
-      include: {
-        tags: {
-          include: {
-            tag: true,
+    await this.findOne(projectId, id);
+    try {
+      return await this.prismaService.contact.update({
+        where: {
+          projectId_id: {
+            projectId,
+            id,
           },
         },
-      },
-    });
+        data: {
+          deletedAt: new Date(),
+        },
+        include: {
+          tags: {
+            include: {
+              tag: true,
+            },
+          },
+        },
+      });
+    } catch (e) {
+      throw new BadRequestException(e);
+    }
   }
 
   async countAll(projectId: number, assignedTo: number): Promise<Count> {
@@ -202,8 +229,8 @@ export class ContactService {
     };
   }
 
-  private toHistoryEventType(key: string) {
-    switch (key) {
+  private toHistoryEventType(property: string) {
+    switch (property) {
       case 'username':
         return HistoryEventType.UsernameChanged;
 
@@ -212,9 +239,6 @@ export class ContactService {
 
       case 'notes':
         return HistoryEventType.NotesChanged;
-
-      case 'tags':
-        return HistoryEventType.TagsChanged;
     }
   }
 }

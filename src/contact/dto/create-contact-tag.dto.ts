@@ -1,6 +1,6 @@
 import { IsInt } from 'class-validator';
 
-export class AddTagDto {
+export class CreateContactTagDto {
   @IsInt()
   tagId: number;
 }

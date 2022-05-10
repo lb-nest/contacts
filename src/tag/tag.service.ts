@@ -8,47 +8,59 @@ import { Tag } from './entities/tag.entity';
 export class TagService {
   constructor(private readonly prismaService: PrismaService) {}
 
-  create(projectId: number, createTagDto: CreateTagDto): Promise<Tag> {
-    return this.prismaService.tag.create({
-      data: {
-        projectId,
-        ...createTagDto,
-      },
-      include: {
-        parent: true,
-        children: true,
-      },
-    });
-  }
-
-  findAll(projectId: number): Promise<Tag[]> {
-    return this.prismaService.tag.findMany({
-      where: {
-        projectId,
-      },
-      include: {
-        parent: true,
-        children: true,
-      },
-    });
-  }
-
-  findOne(projectId: number, id: number): Promise<Tag> {
-    return this.prismaService.tag.findUnique({
-      where: {
-        projectId_id: {
+  async create(projectId: number, createTagDto: CreateTagDto): Promise<Tag> {
+    try {
+      return await this.prismaService.tag.create({
+        data: {
           projectId,
-          id,
+          ...createTagDto,
         },
-      },
-      include: {
-        parent: true,
-        children: true,
-      },
-    });
+        include: {
+          parent: true,
+          children: true,
+        },
+      });
+    } catch (e) {
+      throw new BadRequestException(e);
+    }
   }
 
-  update(
+  async findAll(projectId: number): Promise<Tag[]> {
+    try {
+      return await this.prismaService.tag.findMany({
+        where: {
+          projectId,
+        },
+        include: {
+          parent: true,
+          children: true,
+        },
+      });
+    } catch (e) {
+      throw new BadRequestException(e);
+    }
+  }
+
+  async findOne(projectId: number, id: number): Promise<Tag> {
+    try {
+      return await this.prismaService.tag.findUnique({
+        where: {
+          projectId_id: {
+            projectId,
+            id,
+          },
+        },
+        include: {
+          parent: true,
+          children: true,
+        },
+      });
+    } catch (e) {
+      throw new BadRequestException(e);
+    }
+  }
+
+  async update(
     projectId: number,
     id: number,
     updateTagDto: UpdateTagDto,
@@ -57,33 +69,41 @@ export class TagService {
       throw new BadRequestException();
     }
 
-    return this.prismaService.tag.update({
-      where: {
-        projectId_id: {
-          projectId,
-          id,
+    try {
+      return await this.prismaService.tag.update({
+        where: {
+          projectId_id: {
+            projectId,
+            id,
+          },
         },
-      },
-      data: updateTagDto,
-      include: {
-        parent: true,
-        children: true,
-      },
-    });
+        data: updateTagDto,
+        include: {
+          parent: true,
+          children: true,
+        },
+      });
+    } catch (e) {
+      throw new BadRequestException(e);
+    }
   }
 
-  delete(projectId: number, id: number): Promise<Tag> {
-    return this.prismaService.tag.delete({
-      where: {
-        projectId_id: {
-          projectId,
-          id,
+  async delete(projectId: number, id: number): Promise<Tag> {
+    try {
+      return await this.prismaService.tag.delete({
+        where: {
+          projectId_id: {
+            projectId,
+            id,
+          },
         },
-      },
-      include: {
-        parent: true,
-        children: true,
-      },
-    });
+        include: {
+          parent: true,
+          children: true,
+        },
+      });
+    } catch (e) {
+      throw new BadRequestException(e);
+    }
   }
 }

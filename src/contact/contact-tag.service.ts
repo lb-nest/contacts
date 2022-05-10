@@ -1,64 +1,87 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { HistoryEventType } from '@prisma/client';
 import { PrismaService } from 'src/prisma.service';
-import { ContactService } from './contact.service';
-import { AddTagDto } from './dto/add-tag.dto';
 import { TagWithoutParentAndChildren } from '../tag/entities/tag-without-parent-and-children.entity';
+import { ContactHistoryService } from './contact-history.service';
+import { ContactService } from './contact.service';
+import { CreateContactTagDto } from './dto/create-contact-tag.dto';
 
 @Injectable()
 export class ContactTagService {
   constructor(
     private readonly prismaService: PrismaService,
     private readonly contactService: ContactService,
+    private readonly contactHistoryService: ContactHistoryService,
   ) {}
 
   async findAll(
     projectId: number,
     id: number,
   ): Promise<TagWithoutParentAndChildren[]> {
-    return this.prismaService.tag.findMany({
-      where: {
-        contacts: {
-          some: {
-            contact: {
-              projectId,
-              id,
+    try {
+      return this.prismaService.tag.findMany({
+        where: {
+          contacts: {
+            some: {
+              contact: {
+                projectId,
+                id,
+              },
             },
           },
         },
-      },
-    });
+      });
+    } catch (e) {
+      throw new BadRequestException(e);
+    }
   }
 
   async create(
     projectId: number,
     id: number,
-    addTagDto: AddTagDto,
+    createContactTagDto: CreateContactTagDto,
   ): Promise<TagWithoutParentAndChildren> {
-    const tag = await this.prismaService.contactTag.create({
-      data: {
-        contact: {
-          connect: {
-            projectId_id: {
-              projectId,
-              id,
+    try {
+      const tag = await this.prismaService.contactTag.create({
+        data: {
+          contact: {
+            connect: {
+              projectId_id: {
+                projectId,
+                id,
+              },
+            },
+          },
+          tag: {
+            connect: {
+              projectId_id: {
+                projectId,
+                id: createContactTagDto.tagId,
+              },
             },
           },
         },
-        tag: {
-          connect: {
-            projectId_id: {
-              projectId,
-              id: addTagDto.tagId,
-            },
-          },
+        include: {
+          tag: true,
         },
-      },
-      include: {
-        tag: true,
-      },
-    });
+      });
 
-    return tag.tag;
+      await this.contactHistoryService.create(projectId, id, {
+        eventType: HistoryEventType.TagsChanged,
+        payload: {
+          eventType: 'add',
+          tagId: createContactTagDto.tagId,
+        },
+      });
+
+      return tag.tag;
+    } catch (e) {
+      throw new BadRequestException(e);
+    }
   }
 
   async delete(
@@ -71,18 +94,30 @@ export class ContactTagService {
       throw new NotFoundException();
     }
 
-    const tag = await this.prismaService.contactTag.delete({
-      where: {
-        tagId_contactId: {
-          tagId,
-          contactId: id,
+    try {
+      const tag = await this.prismaService.contactTag.delete({
+        where: {
+          tagId_contactId: {
+            tagId,
+            contactId: id,
+          },
         },
-      },
-      include: {
-        tag: true,
-      },
-    });
+        include: {
+          tag: true,
+        },
+      });
 
-    return tag.tag;
+      await this.contactHistoryService.create(projectId, id, {
+        eventType: HistoryEventType.TagsChanged,
+        payload: {
+          eventType: 'remove',
+          tagId,
+        },
+      });
+
+      return tag.tag;
+    } catch (e) {
+      throw new BadRequestException(e);
+    }
   }
 }
