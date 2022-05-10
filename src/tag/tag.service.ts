@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from 'src/prisma.service';
 import { CreateTagDto } from './dto/create-tag.dto';
 import { UpdateTagDto } from './dto/update-tag.dto';
@@ -9,55 +13,49 @@ export class TagService {
   constructor(private readonly prismaService: PrismaService) {}
 
   async create(projectId: number, createTagDto: CreateTagDto): Promise<Tag> {
-    try {
-      return await this.prismaService.tag.create({
-        data: {
-          projectId,
-          ...createTagDto,
-        },
-        include: {
-          parent: true,
-          children: true,
-        },
-      });
-    } catch (e) {
-      throw new BadRequestException(e);
-    }
+    return this.prismaService.tag.create({
+      data: {
+        projectId,
+        ...createTagDto,
+      },
+      include: {
+        parent: true,
+        children: true,
+      },
+    });
   }
 
   async findAll(projectId: number): Promise<Tag[]> {
-    try {
-      return await this.prismaService.tag.findMany({
-        where: {
-          projectId,
-        },
-        include: {
-          parent: true,
-          children: true,
-        },
-      });
-    } catch (e) {
-      throw new BadRequestException(e);
-    }
+    return this.prismaService.tag.findMany({
+      where: {
+        projectId,
+      },
+      include: {
+        parent: true,
+        children: true,
+      },
+    });
   }
 
   async findOne(projectId: number, id: number): Promise<Tag> {
-    try {
-      return await this.prismaService.tag.findUnique({
-        where: {
-          projectId_id: {
-            projectId,
-            id,
-          },
+    const tag = await this.prismaService.tag.findUnique({
+      where: {
+        projectId_id: {
+          projectId,
+          id,
         },
-        include: {
-          parent: true,
-          children: true,
-        },
-      });
-    } catch (e) {
-      throw new BadRequestException(e);
+      },
+      include: {
+        parent: true,
+        children: true,
+      },
+    });
+
+    if (!tag) {
+      throw new NotFoundException();
     }
+
+    return tag;
   }
 
   async update(
@@ -69,8 +67,8 @@ export class TagService {
       throw new BadRequestException();
     }
 
-    try {
-      return await this.prismaService.tag.update({
+    const tag = await this.prismaService.tag
+      .update({
         where: {
           projectId_id: {
             projectId,
@@ -82,15 +80,19 @@ export class TagService {
           parent: true,
           children: true,
         },
-      });
-    } catch (e) {
-      throw new BadRequestException(e);
+      })
+      .catch(() => undefined);
+
+    if (!tag) {
+      throw new NotFoundException();
     }
+
+    return tag;
   }
 
   async delete(projectId: number, id: number): Promise<Tag> {
-    try {
-      return await this.prismaService.tag.delete({
+    const tag = await this.prismaService.tag
+      .delete({
         where: {
           projectId_id: {
             projectId,
@@ -101,9 +103,13 @@ export class TagService {
           parent: true,
           children: true,
         },
-      });
-    } catch (e) {
-      throw new BadRequestException(e);
+      })
+      .catch(() => undefined);
+
+    if (!tag) {
+      throw new NotFoundException();
     }
+
+    return tag;
   }
 }

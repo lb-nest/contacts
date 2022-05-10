@@ -19,89 +19,77 @@ export class ContactService {
     projectId: number,
     createContactDto: CreateContactDto,
   ): Promise<Contact> {
-    try {
-      return await this.prismaService.contact.upsert({
-        where: {
-          chatId: createContactDto.chatId,
-        },
-        create: {
-          projectId,
-          status: ContactStatus.Open,
-          ...createContactDto,
-          history: {
-            create: {
-              eventType: HistoryEventType.Created,
-            },
+    return this.prismaService.contact.upsert({
+      where: {
+        chatId: createContactDto.chatId,
+      },
+      create: {
+        projectId,
+        status: ContactStatus.Open,
+        ...createContactDto,
+        history: {
+          create: {
+            eventType: HistoryEventType.Created,
           },
         },
-        update: {
-          deletedAt: null,
-        },
-        include: {
-          tags: {
-            include: {
-              tag: true,
-            },
+      },
+      update: {
+        deletedAt: null,
+      },
+      include: {
+        tags: {
+          include: {
+            tag: true,
           },
         },
-      });
-    } catch (e) {
-      throw new BadRequestException(e);
-    }
+      },
+    });
   }
 
   async findAll(
     projectId: number,
     query: FindAllContactsDto,
   ): Promise<Contact[]> {
-    try {
-      return await this.prismaService.contact.findMany({
-        where: {
-          projectId,
-          assignedTo: null,
-          ...query,
-          deletedAt: null,
-        },
-        orderBy: {
-          updatedAt: 'desc',
-        },
-        include: {
-          tags: {
-            include: {
-              tag: true,
-            },
+    return this.prismaService.contact.findMany({
+      where: {
+        projectId,
+        assignedTo: null, // TODO: null or undefined
+        ...query,
+        deletedAt: null,
+      },
+      orderBy: {
+        updatedAt: 'desc',
+      },
+      include: {
+        tags: {
+          include: {
+            tag: true,
           },
         },
-      });
-    } catch (e) {
-      throw new BadRequestException(e);
-    }
+      },
+    });
   }
 
   async findAllByChatIds(
     projectId: number,
     chatIds: number[],
   ): Promise<Contact[]> {
-    try {
-      return await this.prismaService.contact.findMany({
-        where: {
-          projectId,
-          chatId: {
-            in: chatIds,
-          },
-          deletedAt: null,
+    return this.prismaService.contact.findMany({
+      where: {
+        projectId,
+        chatId: {
+          in: chatIds,
         },
-        include: {
-          tags: {
-            include: {
-              tag: true,
-            },
+        deletedAt: null,
+      },
+      include: {
+        tags: {
+          include: {
+            tag: true,
           },
         },
-      });
-    } catch (e) {
-      throw new BadRequestException(e);
-    }
+      },
+    });
   }
 
   async findOne(projectId: number, id: number): Promise<Contact> {
@@ -123,7 +111,7 @@ export class ContactService {
       })
       .catch(() => undefined);
 
-    if (contact.deletedAt) {
+    if (!contact || contact.deletedAt) {
       throw new NotFoundException();
     }
 
@@ -139,9 +127,8 @@ export class ContactService {
       return ['username', 'name', 'notes'].includes(property);
     });
 
-    await this.findOne(projectId, id);
-    try {
-      return await this.prismaService.contact.update({
+    const contact = await this.prismaService.contact
+      .update({
         where: {
           projectId_id: {
             projectId,
@@ -171,36 +158,41 @@ export class ContactService {
             },
           },
         },
-      });
-    } catch (e) {
-      throw new BadRequestException(e);
+      })
+      .catch(() => undefined);
+
+    if (!contact) {
+      throw new NotFoundException();
     }
+
+    return contact;
   }
 
   async delete(projectId: number, id: number): Promise<Contact> {
-    await this.findOne(projectId, id);
-    try {
-      return await this.prismaService.contact.update({
-        where: {
-          projectId_id: {
-            projectId,
-            id,
+    const contact = await this.prismaService.contact.update({
+      where: {
+        projectId_id: {
+          projectId,
+          id,
+        },
+      },
+      data: {
+        deletedAt: new Date(),
+      },
+      include: {
+        tags: {
+          include: {
+            tag: true,
           },
         },
-        data: {
-          deletedAt: new Date(),
-        },
-        include: {
-          tags: {
-            include: {
-              tag: true,
-            },
-          },
-        },
-      });
-    } catch (e) {
-      throw new BadRequestException(e);
+      },
+    });
+
+    if (!contact) {
+      throw new NotFoundException();
     }
+
+    return contact;
   }
 
   async countAll(projectId: number, assignedTo: number): Promise<Count> {
