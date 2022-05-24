@@ -26,4 +26,8 @@ export class CreateContactDto {
   @IsOptional()
   @IsString()
   notes?: string;
+
+  @IsOptional()
+  @IsInt({ each: true })
+  tags?: number[];
 }

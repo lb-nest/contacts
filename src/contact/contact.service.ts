@@ -1,8 +1,4 @@
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { ContactStatus, HistoryEventType } from '@prisma/client';
 import { PrismaService } from 'src/prisma.service';
 import { CreateContactDto } from './dto/create-contact.dto';
@@ -53,7 +49,7 @@ export class ContactService {
     return this.prismaService.contact.findMany({
       where: {
         projectId,
-        assignedTo: null, // TODO: null or undefined
+        assignedTo: null,
         ...query,
         deletedAt: null,
       },
@@ -123,9 +119,32 @@ export class ContactService {
     id: number,
     updateContactDto: UpdateContactDto,
   ): Promise<Contact> {
-    const events = Object.entries(updateContactDto).filter(([property]) => {
-      return ['username', 'name', 'notes'].includes(property);
-    });
+    const events = Object.entries(updateContactDto).filter(([key]) =>
+      ['username', 'name', 'notes', 'tags'].includes(key),
+    );
+
+    if (updateContactDto.tags) {
+      const contact = await this.findOne(projectId, id);
+      const ids = contact.tags.map(({ tagId }) => tagId);
+
+      await this.prismaService.$transaction([
+        this.prismaService.contactTag.createMany({
+          data: updateContactDto.tags
+            .filter((id) => !ids.includes(id))
+            .map((tagId) => ({
+              tagId,
+              contactId: id,
+            })),
+        }),
+        this.prismaService.contactTag.deleteMany({
+          where: {
+            tagId: {
+              in: ids.filter((id) => !updateContactDto.tags.includes(id)),
+            },
+          },
+        }),
+      ]);
+    }
 
     const contact = await this.prismaService.contact
       .update({
@@ -137,15 +156,16 @@ export class ContactService {
         },
         data: {
           ...updateContactDto,
+          tags: {},
           history:
             events.length === 0
               ? undefined
               : {
                   createMany: {
-                    data: events.map(([property, value]) => ({
-                      eventType: this.toHistoryEventType(property),
+                    data: events.map(([key, val]) => ({
+                      eventType: this.toHistoryEventType(key),
                       payload: {
-                        [property]: value,
+                        [key]: val,
                       },
                     })),
                   },
@@ -221,7 +241,7 @@ export class ContactService {
     };
   }
 
-  private toHistoryEventType(property: string) {
+  private toHistoryEventType(property: string): HistoryEventType {
     switch (property) {
       case 'username':
         return HistoryEventType.UsernameChanged;
@@ -231,6 +251,9 @@ export class ContactService {
 
       case 'notes':
         return HistoryEventType.NotesChanged;
+
+      case 'tags':
+        return HistoryEventType.TagsChanged;
     }
   }
 }
