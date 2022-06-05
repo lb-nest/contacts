@@ -30,6 +30,7 @@ export class ContactService {
         },
       },
       update: {
+        updatedAt: new Date(),
         deletedAt: null,
       },
       include: {
