@@ -6,7 +6,7 @@ export class FindAllContactsDto {
   @IsOptional()
   @IsInt()
   @Transform(({ value }) =>
-    value === 'all' ? undefined : value && Number(value),
+    value === 'null' ? undefined : value && Number(value),
   )
   assignedTo?: number;
 
