@@ -11,6 +11,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { Auth } from 'src/auth/auth.decorator';
+import { TokenPayload } from 'src/auth/entities/token-payload.entity';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { TransformInterceptor } from 'src/shared/interceptors/transform.interceptor';
 import { TagWithoutParentAndChildren } from '../tag/entities/tag-without-parent-and-children.entity';
@@ -21,6 +22,7 @@ import { CreateContactTagDto } from './dto/create-contact-tag.dto';
 import { CreateContactDto } from './dto/create-contact.dto';
 import { CreateHistoryDto } from './dto/create-history.dto';
 import { FindAllContactsDto } from './dto/find-all-contacts.dto';
+import { ImportContactsDto } from './dto/import-contacts.dto';
 import { UpdateContactDto } from './dto/update-contact.dto';
 import { Contact } from './entities/contact.entity';
 import { History } from './entities/history.entity';
@@ -49,24 +51,24 @@ export class ContactController {
 
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(new TransformInterceptor(Contact))
-  @Get('filter')
-  findAllByChatIds(@Auth() user: any, @Query('chatIds') ids: string) {
-    return this.contactService.findAllByChatIds(
+  @Get('findAllByChatId')
+  findAllByChatId(@Auth() user: TokenPayload, @Query('chatId') ids: string) {
+    return this.contactService.findAllByChatId(
       user.project.id,
       ids?.split(',').map(Number).filter(Boolean),
     );
   }
 
   @UseGuards(JwtAuthGuard)
-  @Get('count')
-  countAll(@Auth() user: any) {
+  @Get('countAll')
+  countAll(@Auth() user: TokenPayload) {
     return this.contactService.countAll(user.project.id, user.id);
   }
 
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(new TransformInterceptor(Contact))
   @Get(':id')
-  findOne(@Auth() user: any, @Param('id') id: string) {
+  findOne(@Auth() user: TokenPayload, @Param('id') id: string) {
     return this.contactService.findOne(user.project.id, Number(id));
   }
 
@@ -74,7 +76,7 @@ export class ContactController {
   @UseInterceptors(new TransformInterceptor(Contact))
   @Patch(':id')
   update(
-    @Auth() user: any,
+    @Auth() user: TokenPayload,
     @Param('id') id: string,
     @Body() updateContactDto: UpdateContactDto,
   ) {
@@ -88,15 +90,25 @@ export class ContactController {
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(new TransformInterceptor(Contact))
   @Delete(':id')
-  delete(@Auth() user: any, @Param('id') id: string) {
+  delete(@Auth() user: TokenPayload, @Param('id') id: string) {
     return this.contactService.delete(user.project.id, Number(id));
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(new TransformInterceptor(Contact))
+  @Post('import')
+  import(
+    @Auth() user: TokenPayload,
+    @Body() importContacsDto: ImportContactsDto,
+  ): Promise<Contact[]> {
+    return this.contactService.import(user.project.id, importContacsDto);
   }
 
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(new TransformInterceptor(History))
   @Post(':contactId/history')
   createHistory(
-    @Auth() user: any,
+    @Auth() user: TokenPayload,
     @Param('contactId') contactId: string,
     @Body() createHistoryDto: CreateHistoryDto,
   ) {
@@ -109,8 +121,11 @@ export class ContactController {
 
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(new TransformInterceptor(History))
-  @Get(':id/history')
-  findAllHistory(@Auth() user: any, @Param('contactId') contactId: string) {
+  @Get(':contactId/history')
+  findAllHistory(
+    @Auth() user: TokenPayload,
+    @Param('contactId') contactId: string,
+  ) {
     return this.contactHistoryService.findAll(
       user.project.id,
       Number(contactId),
@@ -121,7 +136,7 @@ export class ContactController {
   @UseInterceptors(new TransformInterceptor(TagWithoutParentAndChildren))
   @Post(':contactId/tags')
   createContactTag(
-    @Auth() user: any,
+    @Auth() user: TokenPayload,
     @Param('contactId') contactId: string,
     @Body() createContactTagDto: CreateContactTagDto,
   ) {
@@ -135,15 +150,18 @@ export class ContactController {
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(new TransformInterceptor(TagWithoutParentAndChildren))
   @Get(':contactId/tags')
-  findAllContactTags(@Auth() user: any, @Param('contactId') id: string) {
-    return this.contatTagService.findAll(user.project.contactId, Number(id));
+  findAllContactTags(
+    @Auth() user: TokenPayload,
+    @Param('contactId') id: string,
+  ) {
+    return this.contatTagService.findAll(user.project.id, Number(id));
   }
 
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(new TransformInterceptor(TagWithoutParentAndChildren))
   @Delete(':contactId/tags/:tagId')
   deleteContactTag(
-    @Auth() user: any,
+    @Auth() user: TokenPayload,
     @Param('contactId') contactId: string,
     @Param('tagId') tagId: string,
   ) {

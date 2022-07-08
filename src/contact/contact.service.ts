@@ -3,6 +3,7 @@ import { ContactStatus, HistoryEventType } from '@prisma/client';
 import { PrismaService } from 'src/prisma.service';
 import { CreateContactDto } from './dto/create-contact.dto';
 import { FindAllContactsDto } from './dto/find-all-contacts.dto';
+import { ImportContactsDto } from './dto/import-contacts.dto';
 import { UpdateContactDto } from './dto/update-contact.dto';
 import { Contact } from './entities/contact.entity';
 import { Count } from './entities/count.entity';
@@ -67,7 +68,7 @@ export class ContactService {
     });
   }
 
-  async findAllByChatIds(
+  async findAllByChatId(
     projectId: number,
     chatIds: number[],
   ): Promise<Contact[]> {
@@ -87,6 +88,32 @@ export class ContactService {
         },
       },
     });
+  }
+
+  async countAll(projectId: number, assignedTo: number): Promise<Count> {
+    const [assigned, unassigned] = await this.prismaService.$transaction([
+      this.prismaService.contact.count({
+        where: {
+          projectId,
+          assignedTo,
+          status: ContactStatus.Open,
+          deletedAt: null,
+        },
+      }),
+      this.prismaService.contact.count({
+        where: {
+          projectId,
+          assignedTo: null,
+          status: ContactStatus.Open,
+          deletedAt: null,
+        },
+      }),
+    ]);
+
+    return {
+      assigned,
+      unassigned,
+    };
   }
 
   async findOne(projectId: number, id: number): Promise<Contact> {
@@ -216,30 +243,33 @@ export class ContactService {
     return contact;
   }
 
-  async countAll(projectId: number, assignedTo: number): Promise<Count> {
-    const [assigned, unassigned] = await this.prismaService.$transaction([
-      this.prismaService.contact.count({
-        where: {
-          projectId,
-          assignedTo,
-          status: ContactStatus.Open,
-          deletedAt: null,
-        },
-      }),
-      this.prismaService.contact.count({
-        where: {
-          projectId,
-          assignedTo: null,
-          status: ContactStatus.Open,
-          deletedAt: null,
-        },
-      }),
-    ]);
-
-    return {
-      assigned,
-      unassigned,
-    };
+  async import(
+    projectId: number,
+    importContactsDto: ImportContactsDto,
+  ): Promise<Contact[]> {
+    return this.prismaService.$transaction(
+      importContactsDto.contacts.map((contact) =>
+        this.prismaService.contact.create({
+          data: {
+            projectId,
+            status: ContactStatus.Open,
+            ...contact,
+            history: {
+              create: {
+                eventType: HistoryEventType.Created,
+              },
+            },
+          },
+          include: {
+            tags: {
+              include: {
+                tag: true,
+              },
+            },
+          },
+        }),
+      ),
+    );
   }
 
   private toHistoryEventType(property: string): HistoryEventType {
