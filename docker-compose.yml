@@ -2,13 +2,15 @@ services:
   db:
     image: postgres
     environment:
-      - POSTGRES_DB=db
-      - POSTGRES_PASSWORD=pwd
+      - POSTGRES_DB
+      - POSTGRES_PASSWORD
   server:
     build: .
     ports:
       - 3040:8080
-    env_file:
-      - .env
+    environment:
+      - DATABASE_URL=postgres://postgres:${POSTGRES_PASSWORD}@db/${POSTGRES_DB}?schema=public
+      - AUTHORIZATION_URL
+      - SECRET
     depends_on:
       - db
