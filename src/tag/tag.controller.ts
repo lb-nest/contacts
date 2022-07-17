@@ -9,8 +9,8 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { Auth } from 'src/auth/auth.decorator';
-import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { BearerAuthGuard } from 'src/auth/bearer-auth.guard';
+import { User } from 'src/auth/user.decorator';
 import { TransformInterceptor } from 'src/shared/interceptors/transform.interceptor';
 import { CreateTagDto } from './dto/create-tag.dto';
 import { UpdateTagDto } from './dto/update-tag.dto';
@@ -21,42 +21,42 @@ import { TagService } from './tag.service';
 export class TagController {
   constructor(private readonly tagService: TagService) {}
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(BearerAuthGuard)
   @UseInterceptors(new TransformInterceptor(Tag))
   @Post()
-  create(@Auth() user: any, @Body() createTagDto: CreateTagDto) {
+  create(@User() user: any, @Body() createTagDto: CreateTagDto) {
     return this.tagService.create(user.project.id, createTagDto);
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(BearerAuthGuard)
   @UseInterceptors(new TransformInterceptor(Tag))
   @Get()
-  findAll(@Auth() user: any) {
+  findAll(@User() user: any) {
     return this.tagService.findAll(user.project.id);
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(BearerAuthGuard)
   @UseInterceptors(new TransformInterceptor(Tag))
   @Get(':id')
-  findOne(@Auth() user: any, @Param('id') id: string) {
+  findOne(@User() user: any, @Param('id') id: string) {
     return this.tagService.findOne(user.project.id, Number(id));
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(BearerAuthGuard)
   @UseInterceptors(new TransformInterceptor(Tag))
   @Patch(':id')
   update(
-    @Auth() user: any,
+    @User() user: any,
     @Param('id') id: string,
     @Body() updateTagDto: UpdateTagDto,
   ) {
     return this.tagService.update(user.project.id, Number(id), updateTagDto);
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(BearerAuthGuard)
   @UseInterceptors(new TransformInterceptor(Tag))
   @Delete(':id')
-  delete(@Auth() user: any, @Param('id') id: string) {
+  delete(@User() user: any, @Param('id') id: string) {
     return this.tagService.delete(user.project.id, Number(id));
   }
 }
