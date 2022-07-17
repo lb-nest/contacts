@@ -10,6 +10,7 @@ import { TagModule } from './tag/tag.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
+      isGlobal: true,
       validationSchema: Joi.object({
         DATABASE_URL: Joi.string().uri().required(),
         PORT: Joi.number().default(8080),
