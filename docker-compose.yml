@@ -11,6 +11,5 @@ services:
     environment:
       - DATABASE_URL=postgres://postgres:${POSTGRES_PASSWORD}@db/${POSTGRES_DB}?schema=public
       - AUTHORIZATION_URL
-      - SECRET
     depends_on:
       - db

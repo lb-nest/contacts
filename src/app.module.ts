@@ -13,7 +13,6 @@ import { TagModule } from './tag/tag.module';
       validationSchema: Joi.object({
         DATABASE_URL: Joi.string().uri().required(),
         PORT: Joi.number().default(8080),
-        SECRET: Joi.string().required(),
         AUTHORIZATION_URL: Joi.string().uri().required(),
       }),
     }),
