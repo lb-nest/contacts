@@ -10,49 +10,70 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum AssigneeType {
+  User
+  Chatbot
+}
+
+model AssignedTo {
+  id        Int
+  type      AssigneeType @default(User)
+  contactId Int          @unique
+  contact   Contact      @relation(fields: [contactId], references: [id], onDelete: Cascade)
+
+  @@id([contactId, id])
+}
+
 enum ContactStatus {
   Open
   Closed
 }
 
 model Contact {
-  id         Int           @id @default(autoincrement())
-  projectId  Int
-  chatId     Int           @unique
-  username   String
-  name       String
-  avatarUrl  String?
-  notes      String        @default("")
-  status     ContactStatus
-  assignedTo Int?
-  priority   Int           @default(3)
-  resolved   Boolean       @default(false)
-  history    History[]
-  tags       ContactTag[]
-  createdAt  DateTime      @default(now())
-  updatedAt  DateTime?
-  deletedAt  DateTime?
+  id           Int           @id @default(autoincrement())
+  projectId    Int
+  name         String
+  avatarUrl    String?
+  notes        String        @default("")
+  status       ContactStatus
+  telegramId   String?
+  webchatId    String?
+  whatsappId   String?
+  assignedTo   AssignedTo?
+  priority     Int           @default(3)
+  resolved     Boolean       @default(false)
+  customFields CustomField[]
+  chats        Chat[]
+  tags         ContactTag[]
+  history      History[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime?     @updatedAt
+  deletedAt    DateTime?
 
   @@unique([projectId, id])
 }
 
+model Chat {
+  id        Int     @unique
+  contactId Int
+  contact   Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+
+  @@id([contactId, id])
+}
+
 enum HistoryEventType {
-  Created
-  Accepted
-  Returned
-  Closed
-  Reopened
-  Transferred
-  UsernameChanged
-  NameChanged
-  NotesChanged
-  TagsChanged
+  Create
+  Assign
+  BackToQueue
+  Close
+  Update
+  Remove
 }
 
 model History {
   id        Int              @id @default(autoincrement())
   contactId Int
-  contact   Contact          @relation(fields: [contactId], references: [id])
+  contact   Contact          @relation(fields: [contactId], references: [id], onDelete: Cascade)
   eventType HistoryEventType
   payload   Json?
   createdAt DateTime         @default(now())
@@ -79,9 +100,15 @@ model ContactTag {
   tagId     Int
   tag       Tag     @relation(fields: [tagId], references: [id], onDelete: Cascade)
   contactId Int
-  contact   Contact @relation(fields: [contactId], references: [id])
+  contact   Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
 
-  @@unique([tagId, contactId])
-  @@index([tagId])
-  @@index([contactId])
+  @@id([tagId, contactId])
+}
+
+model CustomField {
+  id        Int     @id @default(autoincrement())
+  contactId Int
+  contact   Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  name      String
+  value     String?
 }

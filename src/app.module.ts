@@ -1,7 +1,6 @@
 import { ClassSerializerInterceptor, Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_INTERCEPTOR } from '@nestjs/core';
-import { EventEmitterModule } from '@nestjs/event-emitter';
 import Joi from 'joi';
 import { AuthModule } from './auth/auth.module';
 import { ContactModule } from './contact/contact.module';
@@ -12,17 +11,14 @@ import { TagModule } from './tag/tag.module';
     ConfigModule.forRoot({
       isGlobal: true,
       validationSchema: Joi.object({
+        BROKER_URL: Joi.string().uri().required(),
         DATABASE_URL: Joi.string().uri().required(),
-        PORT: Joi.number().default(8080),
-        AUTHORIZATION_URL: Joi.string().uri().required(),
       }),
     }),
-    EventEmitterModule.forRoot(),
     AuthModule,
     ContactModule,
     TagModule,
   ],
-  controllers: [],
   providers: [
     {
       provide: APP_INTERCEPTOR,

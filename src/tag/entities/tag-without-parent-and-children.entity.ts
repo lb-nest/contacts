@@ -1,6 +1,7 @@
+import Prisma from '@prisma/client';
 import { Exclude } from 'class-transformer';
 
-export class TagWithoutParentAndChildren {
+export class TagWithoutParentAndChildren implements Prisma.Tag {
   id: number;
 
   @Exclude()
@@ -13,7 +14,7 @@ export class TagWithoutParentAndChildren {
   color: string;
 
   @Exclude()
-  parentId?: number;
+  parentId: number | null;
 
   createdAt: Date;
 
