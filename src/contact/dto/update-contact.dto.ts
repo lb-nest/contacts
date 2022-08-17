@@ -11,7 +11,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { CreateContactDto } from './create-contact.dto';
-import { UpdateAssignedToDto } from './update-assigned-to.dot';
+import { UpdateAssignedToDto } from './update-assigned-to.dto';
 
 export class UpdateContactDto extends PartialType(CreateContactDto) {
   @IsInt()
