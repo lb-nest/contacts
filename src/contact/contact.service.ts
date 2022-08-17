@@ -124,7 +124,6 @@ export class ContactService {
     return this.prismaService.contact.findMany({
       where: {
         projectId,
-        assignedTo: null,
         deletedAt: null,
       },
       orderBy: {
