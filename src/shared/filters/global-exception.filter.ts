@@ -11,8 +11,6 @@ import { Observable, throwError } from 'rxjs';
 @Catch()
 export class GlobalExceptionFilter implements RpcExceptionFilter<RpcException> {
   catch(exception: any, host: ArgumentsHost): Observable<any> {
-    console.log(exception);
-
     if (exception instanceof PrismaClientKnownRequestError) {
       return throwError(() => new RpcException(exception.code));
     }

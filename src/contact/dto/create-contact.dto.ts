@@ -1,4 +1,4 @@
-import { Transform, TransformFnParams } from 'class-transformer';
+import { Transform } from 'class-transformer';
 import {
   IsInt,
   IsNotEmpty,
@@ -8,15 +8,22 @@ import {
 } from 'class-validator';
 
 export class CreateContactDto {
-  @IsInt()
-  chatId: number;
+  @IsOptional()
+  @IsString()
+  telegramId?: string;
 
-  @IsNotEmpty()
-  @Transform(({ value }: TransformFnParams) => value.trim())
-  username: string;
+  @Transform(({ value }) => value.replace(/[^0-9]/gim, ''))
+  @IsOptional()
+  @IsString()
+  whatsappId?: string;
 
+  @IsOptional()
+  @IsString()
+  webchatId?: string;
+
+  @Transform(({ value }) => value.trim())
+  @IsString()
   @IsNotEmpty()
-  @Transform(({ value }: TransformFnParams) => value.trim())
   name: string;
 
   @IsOptional()

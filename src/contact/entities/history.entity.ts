@@ -1,15 +1,15 @@
-import { HistoryEventType } from '@prisma/client';
+import Prisma from '@prisma/client';
 import { Exclude } from 'class-transformer';
 
-export class History {
+export class History implements Prisma.History {
   id: number;
 
   @Exclude()
   contactId: number;
 
-  eventType: HistoryEventType;
+  eventType: Prisma.HistoryEventType;
 
-  payload?: any;
+  payload: any;
 
   createdAt: Date;
 

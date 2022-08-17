@@ -1,4 +1,5 @@
-export class Count {
+export class CountAllContacts {
   assigned: number;
+
   unassigned: number;
 }
