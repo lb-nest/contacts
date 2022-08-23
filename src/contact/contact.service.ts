@@ -155,7 +155,9 @@ export class ContactService {
             ? {
                 id: findAllContactsForUserDto.assignedTo,
               }
-            : undefined,
+            : {
+                is: null,
+              },
         status: findAllContactsForUserDto.status,
         deletedAt: null,
       },
@@ -261,7 +263,7 @@ export class ContactService {
 
   async update(
     projectId: number,
-    updateContactDto: UpdateContactDto,
+    { tags, ...updateContactDto }: UpdateContactDto,
   ): Promise<Contact> {
     const history = Object.keys(updateContactDto);
     const contact = await this.prismaService.contact.update({
@@ -308,11 +310,11 @@ export class ContactService {
       },
     });
 
-    if (updateContactDto.tags) {
+    if (tags) {
       const ids = contact.tags.map(({ tagId }) => tagId);
       await this.prismaService.$transaction([
         this.prismaService.contactTag.createMany({
-          data: updateContactDto.tags
+          data: tags
             .filter((id) => !ids.includes(id))
             .map((tagId) => ({
               tagId,
@@ -322,7 +324,7 @@ export class ContactService {
         this.prismaService.contactTag.deleteMany({
           where: {
             tagId: {
-              in: ids.filter((id) => !updateContactDto.tags.includes(id)),
+              in: ids.filter((id) => !tags.includes(id)),
             },
           },
         }),
