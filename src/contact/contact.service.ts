@@ -75,6 +75,7 @@ export class ContactService {
         },
         data: {
           ...createContactDto,
+          status: ContactStatus.Open,
           deletedAt: null,
           updatedAt: new Date(),
         },
