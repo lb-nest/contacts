@@ -18,10 +18,14 @@ enum AssigneeType {
 model AssignedTo {
   id        Int
   type      AssigneeType @default(User)
-  contactId Int          @unique
+  contactId Int          @id
   contact   Contact      @relation(fields: [contactId], references: [id], onDelete: Cascade)
 
-  @@id([contactId, id])
+  @@unique([contactId, id])
+
+  @@index([id])
+  @@index([type])
+  @@index([contactId])
 }
 
 enum ContactStatus {
@@ -51,6 +55,16 @@ model Contact {
   deletedAt    DateTime?
 
   @@unique([projectId, id])
+  @@unique([projectId, telegramId])
+  @@unique([projectId, webchatId])
+  @@unique([projectId, whatsappId])
+
+  @@index([projectId])
+  @@index([status])
+  @@index([priority])
+  @@index([resolved])
+  @@index([createdAt])
+  @@index([updatedAt])
 }
 
 model Chat {
@@ -59,6 +73,9 @@ model Chat {
   contact   Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
 
   @@id([contactId, id])
+
+  @@index([id])
+  @@index([contactId])
 }
 
 enum HistoryEventType {
@@ -77,7 +94,12 @@ model History {
   eventType HistoryEventType
   payload   Json?
   createdAt DateTime         @default(now())
-  updatedAt DateTime         @updatedAt
+  updatedAt DateTime?        @updatedAt
+
+  @@index([contactId])
+  @@index([eventType])
+  @@index([createdAt])
+  @@index([updatedAt])
 }
 
 model Tag {
@@ -95,6 +117,8 @@ model Tag {
 
   @@unique([projectId, id])
   @@unique([projectId, name])
+
+  @@index([projectId])
 }
 
 model ContactTag {
@@ -104,6 +128,9 @@ model ContactTag {
   contact   Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
 
   @@id([tagId, contactId])
+
+  @@index([tagId])
+  @@index([contactId])
 }
 
 model CustomField {
@@ -112,4 +139,6 @@ model CustomField {
   contact   Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
   name      String
   value     String?
+
+  @@index([contactId])
 }
