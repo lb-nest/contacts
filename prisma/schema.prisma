@@ -94,6 +94,7 @@ model Tag {
   updatedAt   DateTime     @updatedAt
 
   @@unique([projectId, id])
+  @@unique([projectId, name])
 }
 
 model ContactTag {
