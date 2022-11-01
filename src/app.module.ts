@@ -12,8 +12,8 @@ import { TagModule } from './tag/tag.module';
     ConfigModule.forRoot({
       isGlobal: true,
       validationSchema: Joi.object({
-        BROKER_URL: Joi.string().uri().required(),
         DATABASE_URL: Joi.string().uri().required(),
+        BROKER_URL: Joi.string().uri().required(),
       }),
     }),
     AuthModule,

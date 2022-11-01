@@ -1,6 +1,6 @@
 import { IsInt } from 'class-validator';
 
-export class FindAllContactsForChatDto {
+export class FindOneContactForChatDto {
   @IsInt({ each: true })
   ids: number[];
 }

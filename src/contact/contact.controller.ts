@@ -28,7 +28,7 @@ import { CountAllContacts } from './entities/count-all-contacts.entity';
 import { History } from './entities/history.entity';
 import { HistoryService } from './history.service';
 
-@Controller('contacts')
+@Controller()
 export class ContactController {
   constructor(
     private readonly contactTagService: ContactTagService,
@@ -90,16 +90,16 @@ export class ContactController {
     );
   }
 
-  @MessagePattern('contacts.findAllForChat')
+  @MessagePattern('contacts.findOneForChat')
   @UseGuards(BearerAuthGuard)
   @UseInterceptors(new PlainToClassInterceptor(Contact))
   findAllForChat(
     @Auth() auth: TokenPayload,
-    @Payload('payload') findAllContactForChatDto: FindAllContactsForChatDto,
+    @Payload('payload') findOneContactForChatDto: FindOneContactForChatDto,
   ) {
-    return this.contactService.findAllForChat(
+    return this.contactService.findOneForChat(
       auth.project.id,
-      findAllContactForChatDto,
+      findOneContactForChatDto,
     );
   }
 

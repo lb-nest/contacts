@@ -175,9 +175,9 @@ export class ContactService {
     });
   }
 
-  findAllForChat(
+  findOneForChat(
     projectId: number,
-    findAllContactsForChatDto: FindAllContactsForChatDto,
+    findOneContactForChatDto: FindOneContactForChatDto,
   ): Promise<Contact[]> {
     return this.prismaService.contact.findMany({
       where: {
@@ -185,7 +185,7 @@ export class ContactService {
         chats: {
           some: {
             id: {
-              in: findAllContactsForChatDto.ids,
+              in: findOneContactForChatDto.ids,
             },
           },
         },
