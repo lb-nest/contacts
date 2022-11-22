@@ -1,11 +1,17 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { ContactStatus, HistoryEventType, PrismaPromise } from '@prisma/client';
+import {
+  AssigneeType,
+  ContactStatus,
+  HistoryEventType,
+  PrismaPromise,
+} from '@prisma/client';
 import { PrismaService } from 'src/prisma.service';
 import { CreateChatForContactDto } from './dto/create-chat-for-contact.dto';
 import { CreateContactForChatDto } from './dto/create-contact-for-chat.dto';
 import { CreateContactDto } from './dto/create-contact.dto';
-import { FindAllContactsForChatDto } from './dto/find-all-contacts-for-chat.dto';
 import { FindAllContactsForUserDto } from './dto/find-all-contacts-for-user.dto';
+import { FindAllContactsDto } from './dto/find-all-contacts.dto';
+import { FindOneContactForChatDto } from './dto/find-one-contact-for-chat.dto';
 import { ImportContactsDto } from './dto/import-contacts.dto';
 import { UpdateContactDto } from './dto/update-contact.dto';
 import { Contact } from './entities/contact.entity';
@@ -121,15 +127,55 @@ export class ContactService {
     });
   }
 
-  findAll(projectId: number): Promise<Contact[]> {
+  findAll(
+    projectId: number,
+    findAllContactsDto: FindAllContactsDto,
+  ): Promise<Contact[]> {
     return this.prismaService.contact.findMany({
       where: {
         projectId,
         deletedAt: null,
+        OR:
+          findAllContactsDto.query == null
+            ? undefined
+            : [
+                {
+                  telegramId: {
+                    contains: findAllContactsDto.query,
+                    mode: 'insensitive',
+                  },
+                },
+                {
+                  webchatId: {
+                    contains: findAllContactsDto.query,
+                    mode: 'insensitive',
+                  },
+                },
+                {
+                  whatsappId: {
+                    contains: findAllContactsDto.query,
+                    mode: 'insensitive',
+                  },
+                },
+                {
+                  name: {
+                    contains: findAllContactsDto.query,
+                    mode: 'insensitive',
+                  },
+                },
+              ],
       },
       orderBy: {
         id: 'desc',
       },
+      cursor:
+        findAllContactsDto.cursor == null
+          ? undefined
+          : {
+              id: findAllContactsDto.cursor,
+            },
+      skip: findAllContactsDto.cursor == null ? undefined : 1,
+      take: findAllContactsDto.take ?? undefined,
       include: {
         assignedTo: true,
         customFields: true,
@@ -155,6 +201,7 @@ export class ContactService {
           findAllContactsForUserDto.assignedTo === userId
             ? {
                 id: findAllContactsForUserDto.assignedTo,
+                type: AssigneeType.User,
               }
             : {
                 is: null,
@@ -162,6 +209,17 @@ export class ContactService {
         status: findAllContactsForUserDto.status,
         deletedAt: null,
       },
+      orderBy: {
+        id: 'desc',
+      },
+      cursor:
+        findAllContactsForUserDto.cursor == null
+          ? undefined
+          : {
+              id: findAllContactsForUserDto.cursor,
+            },
+      skip: findAllContactsForUserDto.cursor == null ? undefined : 1,
+      take: findAllContactsForUserDto.take ?? undefined,
       include: {
         assignedTo: true,
         customFields: true,

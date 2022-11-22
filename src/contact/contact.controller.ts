@@ -18,8 +18,9 @@ import { CreateContactForChatDto } from './dto/create-contact-for-chat.dto';
 import { CreateContactTagDto } from './dto/create-contact-tag.dto';
 import { CreateContactDto } from './dto/create-contact.dto';
 import { CreateHistoryDto } from './dto/create-history.dto';
-import { FindAllContactsForChatDto } from './dto/find-all-contacts-for-chat.dto';
 import { FindAllContactsForUserDto } from './dto/find-all-contacts-for-user.dto';
+import { FindAllContactsDto } from './dto/find-all-contacts.dto';
+import { FindOneContactForChatDto } from './dto/find-one-contact-for-chat.dto';
 import { ImportContactsDto } from './dto/import-contacts.dto';
 import { RemoveContactTagDto } from './dto/remove-contact-tag.dto';
 import { UpdateContactDto } from './dto/update-contact.dto';
@@ -72,8 +73,11 @@ export class ContactController {
   @MessagePattern('contacts.findAll')
   @UseGuards(BearerAuthGuard)
   @UseInterceptors(new PlainToClassInterceptor(Contact))
-  findAll(@Auth() auth: TokenPayload) {
-    return this.contactService.findAll(auth.project.id);
+  findAll(
+    @Auth() auth: TokenPayload,
+    @Payload('payload') findAllContactsDto: FindAllContactsDto,
+  ) {
+    return this.contactService.findAll(auth.project.id, findAllContactsDto);
   }
 
   @MessagePattern('contacts.findAllForUser')
