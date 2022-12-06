@@ -53,7 +53,7 @@ export class ContactController {
   create(
     @Auth() auth: TokenPayload,
     @Payload('payload') createContactDto: CreateContactDto,
-  ) {
+  ): Promise<Contact> {
     return this.contactService.create(auth.project.id, createContactDto);
   }
 
@@ -63,10 +63,22 @@ export class ContactController {
   createForChat(
     @Auth() auth: TokenPayload,
     @Payload('payload') createContactForChatDto: CreateContactForChatDto,
-  ) {
+  ): Promise<Contact> {
     return this.contactService.createForChat(
       auth.project.id,
       createContactForChatDto,
+    );
+  }
+
+  @MessagePattern('contacts.createChatFor')
+  @UseGuards(BearerAuthGuard)
+  createChat(
+    @Auth() auth: TokenPayload,
+    @Payload('payload') createChatForContactDto: CreateChatForContactDto,
+  ): Promise<boolean> {
+    return this.contactService.createChatFor(
+      auth.project.id,
+      createChatForContactDto,
     );
   }
 
@@ -76,7 +88,7 @@ export class ContactController {
   findAll(
     @Auth() auth: TokenPayload,
     @Payload('payload') findAllContactsDto: FindAllContactsDto,
-  ) {
+  ): Promise<Contact[]> {
     return this.contactService.findAll(auth.project.id, findAllContactsDto);
   }
 
@@ -86,7 +98,7 @@ export class ContactController {
   findAllForUser(
     @Auth() auth: TokenPayload,
     @Payload('payload') findAllContactForUserDto: FindAllContactsForUserDto,
-  ) {
+  ): Promise<Contact[]> {
     return this.contactService.findAllForUser(
       auth.project.id,
       auth.id,
@@ -100,18 +112,11 @@ export class ContactController {
   findAllForChat(
     @Auth() auth: TokenPayload,
     @Payload('payload') findOneContactForChatDto: FindOneContactForChatDto,
-  ) {
+  ): Promise<Contact[]> {
     return this.contactService.findOneForChat(
       auth.project.id,
       findOneContactForChatDto,
     );
-  }
-
-  @MessagePattern('contacts.countAll')
-  @UseGuards(BearerAuthGuard)
-  @UseInterceptors(new PlainToClassInterceptor(CountAllContacts))
-  countAll(@Auth() auth: TokenPayload) {
-    return this.contactService.countAllForUser(auth.project.id, auth.id);
   }
 
   @MessagePattern('contacts.findOne')
@@ -120,7 +125,7 @@ export class ContactController {
   findOne(
     @Auth() auth: TokenPayload,
     @Payload('payload', ParseIntPipe) id: number,
-  ) {
+  ): Promise<Contact> {
     return this.contactService.findOne(auth.project.id, id);
   }
 
@@ -130,7 +135,7 @@ export class ContactController {
   update(
     @Auth() auth: TokenPayload,
     @Payload('payload') updateContactDto: UpdateContactDto,
-  ) {
+  ): Promise<Contact> {
     return this.contactService.update(auth.project.id, updateContactDto);
   }
 
@@ -140,7 +145,7 @@ export class ContactController {
   remove(
     @Auth() auth: TokenPayload,
     @Payload('payload', ParseIntPipe) id: number,
-  ) {
+  ): Promise<Contact> {
     return this.contactService.remove(auth.project.id, Number(id));
   }
 
@@ -150,7 +155,7 @@ export class ContactController {
   createHistory(
     @Auth() auth: TokenPayload,
     @Payload('payload') createHistoryDto: CreateHistoryDto,
-  ) {
+  ): Promise<History> {
     return this.historyService.create(auth.project.id, createHistoryDto);
   }
 
@@ -160,7 +165,7 @@ export class ContactController {
   findAllHistory(
     @Auth() auth: TokenPayload,
     @Payload('payload', ParseIntPipe) contactId: number,
-  ) {
+  ): Promise<History[]> {
     return this.historyService.findAll(auth.project.id, contactId);
   }
 
@@ -170,7 +175,7 @@ export class ContactController {
   createContactTag(
     @Auth() auth: TokenPayload,
     @Payload('payload') createContactTagDto: CreateContactTagDto,
-  ) {
+  ): Promise<TagWithoutParentAndChildren> {
     return this.contactTagService.create(auth.project.id, createContactTagDto);
   }
 
@@ -180,7 +185,7 @@ export class ContactController {
   findAllContactTags(
     @Auth() auth: TokenPayload,
     @Payload('payload', ParseIntPipe) contactId: number,
-  ) {
+  ): Promise<TagWithoutParentAndChildren[]> {
     return this.contactTagService.findAll(auth.project.id, contactId);
   }
 
@@ -190,19 +195,14 @@ export class ContactController {
   removeContactTag(
     @Auth() auth: TokenPayload,
     @Payload('payload') removeContactTagDto: RemoveContactTagDto,
-  ) {
+  ): Promise<TagWithoutParentAndChildren> {
     return this.contactTagService.remove(auth.project.id, removeContactTagDto);
   }
 
-  @MessagePattern('contacts.createChatForContact')
+  @MessagePattern('contacts.countAll')
   @UseGuards(BearerAuthGuard)
-  createChatForContact(
-    @Auth() auth: TokenPayload,
-    @Payload('payload') createChatForContactDto: CreateChatForContactDto,
-  ) {
-    return this.contactService.createChatForContact(
-      auth.project.id,
-      createChatForContactDto,
-    );
+  @UseInterceptors(new PlainToClassInterceptor(CountAllContacts))
+  countAll(@Auth() auth: TokenPayload): Promise<CountAllContacts> {
+    return this.contactService.countAllForUser(auth.project.id, auth.id);
   }
 }

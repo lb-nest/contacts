@@ -81,7 +81,7 @@ model Chat {
 enum HistoryEventType {
   Create
   Assign
-  BackToQueue
+  Return
   Close
   Update
   Remove

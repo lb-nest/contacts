@@ -64,67 +64,79 @@ export class ContactService {
 
   async createForChat(
     projectId: number,
-    createContactForChatDto: CreateContactForChatDto,
+    { chatId, ...createContactDto }: CreateContactForChatDto,
   ): Promise<Contact> {
-    const { chatId, ...createContactDto } = createContactForChatDto;
-
-    const chat = await this.prismaService.chat.findUnique({
+    const { contact, ...chat } = await this.prismaService.chat.upsert({
       where: {
         id: chatId,
       },
-    });
-
-    if (chat) {
-      return this.prismaService.contact.update({
-        where: {
-          id: chat.contactId,
-        },
-        data: {
-          ...createContactDto,
-          status: ContactStatus.Open,
-          deletedAt: null,
-          updatedAt: new Date(),
-        },
-        include: {
-          assignedTo: true,
-          customFields: true,
-          tags: {
-            include: {
-              tag: true,
+      create: {
+        id: chatId,
+        contact: {
+          create: {
+            projectId,
+            status: ContactStatus.Open,
+            ...createContactDto,
+            history: {
+              create: {
+                eventType: HistoryEventType.Create,
+              },
             },
           },
-          chats: true,
         },
-      });
-    }
-
-    return this.prismaService.contact.create({
-      data: {
-        projectId,
-        status: ContactStatus.Open,
-        ...createContactDto,
-        chats: {
-          create: {
-            id: chatId,
-          },
-        },
-        history: {
-          create: {
-            eventType: HistoryEventType.Create,
+      },
+      update: {
+        contact: {
+          update: {
+            ...createContactDto,
+            status: ContactStatus.Open,
+            deletedAt: null,
+            updatedAt: new Date(),
           },
         },
       },
       include: {
-        assignedTo: true,
-        customFields: true,
-        tags: {
+        contact: {
           include: {
-            tag: true,
+            assignedTo: true,
+            customFields: true,
+            tags: {
+              include: {
+                tag: true,
+              },
+            },
           },
         },
-        chats: true,
       },
     });
+
+    return {
+      ...contact,
+      chats: [chat],
+    };
+  }
+
+  async createChatFor(
+    projectId: number,
+    createChatForContactDto: CreateChatForContactDto,
+  ): Promise<boolean> {
+    await this.prismaService.contact.update({
+      where: {
+        projectId_id: {
+          projectId,
+          id: createChatForContactDto.id,
+        },
+      },
+      data: {
+        chats: {
+          create: {
+            id: createChatForContactDto.chatId,
+          },
+        },
+      },
+    });
+
+    return true;
   }
 
   findAll(
@@ -262,37 +274,6 @@ export class ContactService {
     });
   }
 
-  async countAllForUser(
-    projectId: number,
-    userId: number,
-  ): Promise<CountAllContacts> {
-    const [assigned, unassigned] = await this.prismaService.$transaction([
-      this.prismaService.contact.count({
-        where: {
-          projectId,
-          assignedTo: {
-            id: userId,
-          },
-          status: ContactStatus.Open,
-          deletedAt: null,
-        },
-      }),
-      this.prismaService.contact.count({
-        where: {
-          projectId,
-          assignedTo: null,
-          status: ContactStatus.Open,
-          deletedAt: null,
-        },
-      }),
-    ]);
-
-    return {
-      assigned,
-      unassigned,
-    };
-  }
-
   async findOne(projectId: number, id: number): Promise<Contact> {
     const contact = await this.prismaService.contact.findUniqueOrThrow({
       where: {
@@ -322,75 +303,83 @@ export class ContactService {
 
   async update(
     projectId: number,
-    { tags, ...updateContactDto }: UpdateContactDto,
+    { id, tags, assignedTo, ...updateContactDto }: UpdateContactDto,
   ): Promise<Contact> {
-    const history = Object.keys(updateContactDto);
-    const contact = await this.prismaService.contact.update({
-      where: {
-        projectId_id: {
-          projectId,
-          id: updateContactDto.id,
+    try {
+      const history = Object.keys(updateContactDto);
+      const contact = await this.prismaService.contact.update({
+        where: {
+          projectId_id: {
+            projectId,
+            id,
+          },
         },
-      },
-      data: {
-        ...updateContactDto,
-        assignedTo:
-          updateContactDto.assignedTo === undefined
-            ? undefined
-            : updateContactDto.assignedTo === null
-            ? {
-                delete: true,
-              }
-            : {
-                create: updateContactDto.assignedTo,
-              },
-        history: history.length
-          ? undefined
-          : {
-              createMany: {
-                data: history.map((key) => ({
-                  eventType: HistoryEventType.Update,
-                  payload: {
-                    [key]: updateContactDto[key],
+        data: {
+          ...updateContactDto,
+          assignedTo:
+            assignedTo === undefined
+              ? undefined
+              : assignedTo === null
+              ? {
+                  delete: true,
+                }
+              : {
+                  upsert: {
+                    create: assignedTo,
+                    update: assignedTo,
                   },
-                })),
+                },
+          history: history.length
+            ? undefined
+            : {
+                createMany: {
+                  data: history.map((key) => ({
+                    eventType: HistoryEventType.Update,
+                    payload: {
+                      [key]: updateContactDto[key],
+                    },
+                  })),
+                },
+              },
+        },
+        include: {
+          assignedTo: true,
+          customFields: true,
+          tags: {
+            include: {
+              tag: true,
+            },
+          },
+          chats: true,
+        },
+      });
+
+      if (tags) {
+        const ids = contact.tags.map(({ tagId }) => tagId);
+        await this.prismaService.$transaction([
+          this.prismaService.contactTag.createMany({
+            data: tags
+              .filter((id) => !ids.includes(id))
+              .map((tagId) => ({
+                tagId,
+                contactId: id,
+              })),
+          }),
+          this.prismaService.contactTag.deleteMany({
+            where: {
+              tagId: {
+                in: ids.filter((id) => !tags.includes(id)),
               },
             },
-      },
-      include: {
-        assignedTo: true,
-        customFields: true,
-        tags: {
-          include: {
-            tag: true,
-          },
-        },
-        chats: true,
-      },
-    });
+          }),
+        ]);
+      }
 
-    if (tags) {
-      const ids = contact.tags.map(({ tagId }) => tagId);
-      await this.prismaService.$transaction([
-        this.prismaService.contactTag.createMany({
-          data: tags
-            .filter((id) => !ids.includes(id))
-            .map((tagId) => ({
-              tagId,
-              contactId: updateContactDto.id,
-            })),
-        }),
-        this.prismaService.contactTag.deleteMany({
-          where: {
-            tagId: {
-              in: ids.filter((id) => !tags.includes(id)),
-            },
-          },
-        }),
-      ]);
+      return contact;
+    } catch (e) {
+      console.log(e);
+      throw e;
     }
-
-    return contact;
   }
 
   remove(projectId: number, id: number): Promise<Contact> {
@@ -422,26 +411,34 @@ export class ContactService {
     });
   }
 
-  async createChatForContact(
+  async countAllForUser(
     projectId: number,
-    createChatForContactDto: CreateChatForContactDto,
-  ): Promise<boolean> {
-    await this.prismaService.contact.update({
-      where: {
-        projectId_id: {
+    userId: number,
+  ): Promise<CountAllContacts> {
+    const [assigned, unassigned] = await this.prismaService.$transaction([
+      this.prismaService.contact.count({
+        where: {
           projectId,
-          id: createChatForContactDto.id,
-        },
-      },
-      data: {
-        chats: {
-          create: {
-            id: createChatForContactDto.chatId,
+          assignedTo: {
+            id: userId,
           },
+          status: ContactStatus.Open,
+          deletedAt: null,
         },
-      },
-    });
+      }),
+      this.prismaService.contact.count({
+        where: {
+          projectId,
+          assignedTo: null,
+          status: ContactStatus.Open,
+          deletedAt: null,
+        },
+      }),
+    ]);
 
-    return true;
+    return {
+      assigned,
+      unassigned,
+    };
   }
 }
