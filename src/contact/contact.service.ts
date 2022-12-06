@@ -305,81 +305,85 @@ export class ContactService {
     projectId: number,
     { id, tags, assignedTo, ...updateContactDto }: UpdateContactDto,
   ): Promise<Contact> {
-    try {
-      const history = Object.keys(updateContactDto);
-      const contact = await this.prismaService.contact.update({
-        where: {
-          projectId_id: {
-            projectId,
-            id,
-          },
+    const history = Object.keys(updateContactDto);
+    const contact = await this.prismaService.contact.update({
+      where: {
+        projectId_id: {
+          projectId,
+          id,
         },
-        data: {
-          ...updateContactDto,
-          assignedTo:
-            assignedTo === undefined
-              ? undefined
-              : assignedTo === null
-              ? {
-                  delete: true,
-                }
-              : {
-                  upsert: {
-                    create: assignedTo,
-                    update: assignedTo,
-                  },
-                },
-          history: history.length
+      },
+      data: {
+        ...updateContactDto,
+        assignedTo:
+          assignedTo === undefined
             ? undefined
+            : assignedTo === null
+            ? {
+                delete: true,
+              }
             : {
-                createMany: {
-                  data: history.map((key) => ({
-                    eventType: HistoryEventType.Update,
-                    payload: {
-                      [key]: updateContactDto[key],
-                    },
-                  })),
+                upsert: {
+                  create: assignedTo,
+                  update: assignedTo,
                 },
               },
+        history: history.length
+          ? undefined
+          : {
+              createMany: {
+                data: history.map((key) => ({
+                  eventType: HistoryEventType.Update,
+                  payload: {
+                    [key]: updateContactDto[key],
+                  },
+                })),
+              },
+            },
+      },
+      include: {
+        assignedTo: true,
+        customFields: true,
+        tags: {
+          include: {
+            tag: true,
+          },
+        },
+        chats: true,
+      },
+    });
+
+    if (tags) {
+      const ids = contact.tags.map(({ tagId }) => tagId);
+      await this.prismaService.$transaction([
+        this.prismaService.contactTag.createMany({
+          data: tags
+            .filter((id) => !ids.includes(id))
+            .map((tagId) => ({
+              tagId,
+              contactId: id,
+            })),
+        }),
+        this.prismaService.contactTag.deleteMany({
+          where: {
+            tagId: {
+              in: ids.filter((id) => !tags.includes(id)),
+            },
+          },
+        }),
+      ]);
+
+      contact.tags = await this.prismaService.contactTag.findMany({
+        where: {
+          contactId: contact.id,
         },
         include: {
-          assignedTo: true,
-          customFields: true,
-          tags: {
-            include: {
-              tag: true,
-            },
-          },
-          chats: true,
+          tag: true,
         },
       });
-
-      if (tags) {
-        const ids = contact.tags.map(({ tagId }) => tagId);
-        await this.prismaService.$transaction([
-          this.prismaService.contactTag.createMany({
-            data: tags
-              .filter((id) => !ids.includes(id))
-              .map((tagId) => ({
-                tagId,
-                contactId: id,
-              })),
-          }),
-          this.prismaService.contactTag.deleteMany({
-            where: {
-              tagId: {
-                in: ids.filter((id) => !tags.includes(id)),
-              },
-            },
-          }),
-        ]);
-      }
-
-      return contact;
-    } catch (e) {
-      console.log(e);
-      throw e;
     }
+
+    return contact;
   }
 
   remove(projectId: number, id: number): Promise<Contact> {
