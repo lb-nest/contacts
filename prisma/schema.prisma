@@ -16,16 +16,26 @@ enum AssigneeType {
 }
 
 model AssignedTo {
-  id        Int
-  type      AssigneeType @default(User)
   contactId Int          @id
   contact   Contact      @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  id        Int
+  type      AssigneeType @default(User)
 
   @@unique([contactId, id])
-
   @@index([id])
   @@index([type])
-  @@index([contactId])
+}
+
+model Chat {
+  contactId Int
+  contact   Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  accountId String
+  channelId Int?
+
+  @@id([contactId, accountId])
+  @@unique([accountId, channelId])
+  @@index([accountId])
+  @@index([channelId])
 }
 
 enum ContactStatus {
@@ -40,42 +50,24 @@ model Contact {
   avatarUrl    String?
   notes        String        @default("")
   status       ContactStatus
-  telegramId   String?
-  webchatId    String?
-  whatsappId   String?
   assignedTo   AssignedTo?
+  chats        Chat[]
   priority     Int           @default(3)
   resolved     Boolean       @default(false)
-  customFields CustomField[]
-  chats        Chat[]
   tags         ContactTag[]
+  customFields CustomField[]
   history      History[]
   createdAt    DateTime      @default(now())
   updatedAt    DateTime?     @updatedAt
   deletedAt    DateTime?
 
   @@unique([projectId, id])
-  @@unique([projectId, telegramId])
-  @@unique([projectId, webchatId])
-  @@unique([projectId, whatsappId])
-
   @@index([projectId])
   @@index([status])
   @@index([priority])
   @@index([resolved])
   @@index([createdAt])
   @@index([updatedAt])
-}
-
-model Chat {
-  id        Int     @unique
-  contactId Int
-  contact   Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
-
-  @@id([contactId, id])
-
-  @@index([id])
-  @@index([contactId])
 }
 
 enum HistoryEventType {
@@ -94,12 +86,10 @@ model History {
   eventType HistoryEventType
   payload   Json?
   createdAt DateTime         @default(now())
-  updatedAt DateTime?        @updatedAt
 
   @@index([contactId])
   @@index([eventType])
   @@index([createdAt])
-  @@index([updatedAt])
 }
 
 model Tag {
@@ -117,7 +107,6 @@ model Tag {
 
   @@unique([projectId, id])
   @@unique([projectId, name])
-
   @@index([projectId])
 }
 
@@ -128,7 +117,6 @@ model ContactTag {
   contact   Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
 
   @@id([tagId, contactId])
-
   @@index([tagId])
   @@index([contactId])
 }

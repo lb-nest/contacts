@@ -1,15 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma.service';
-import { CreateHistoryDto } from './dto/create-history.dto';
+import { CreateContactHistoryDto } from './dto/create-contact-history.dto';
 import { History } from './entities/history.entity';
 
 @Injectable()
-export class HistoryService {
+export class ContactHistoryService {
   constructor(private readonly prismaService: PrismaService) {}
 
   create(
     projectId: number,
-    createHistoryDto: CreateHistoryDto,
+    createContactHistoryDto: CreateContactHistoryDto,
   ): Promise<History> {
     return this.prismaService.history.create({
       data: {
@@ -17,12 +17,12 @@ export class HistoryService {
           connect: {
             projectId_id: {
               projectId,
-              id: createHistoryDto.contactId,
+              id: createContactHistoryDto.contactId,
             },
           },
         },
-        eventType: createHistoryDto.eventType,
-        payload: createHistoryDto.payload,
+        eventType: createContactHistoryDto.eventType,
+        payload: createContactHistoryDto.payload,
       },
     });
   }

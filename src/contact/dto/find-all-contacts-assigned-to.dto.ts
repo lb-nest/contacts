@@ -1,4 +1,3 @@
-import { PartialType } from '@nestjs/mapped-types';
 import { ContactStatus } from '@prisma/client';
 import { Type } from 'class-transformer';
 import {
@@ -10,26 +9,26 @@ import {
   Min,
   ValidateNested,
 } from 'class-validator';
-import { CreateContactDto } from './create-contact.dto';
 import { CreateAssignedToDto } from './create-assigned-to.dto';
 
-export class UpdateContactDto extends PartialType(CreateContactDto) {
-  @IsInt()
-  id: number;
-
-  @IsOptional()
-  @IsEnum(ContactStatus)
-  status?: ContactStatus;
-
+export class FindAllContactsAssignedToDto {
   @Type(() => CreateAssignedToDto)
   @IsOptional()
   @IsObject()
   @ValidateNested()
-  assignedTo?: CreateAssignedToDto | null;
+  assignedTo?: CreateAssignedToDto;
+
+  @IsEnum(ContactStatus)
+  status: ContactStatus;
 
   @IsOptional()
   @IsInt()
   @Min(1)
-  @Max(5)
-  priority?: number;
+  cursor?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  take?: number;
 }

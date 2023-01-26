@@ -1,23 +1,23 @@
 import { Injectable } from '@nestjs/common';
 import { HistoryEventType } from '@prisma/client';
 import { PrismaService } from 'src/prisma.service';
-import { TagWithoutParentAndChildren } from '../tag/entities/tag-without-parent-and-children.entity';
+import { TagWithoutParentAndChildren } from 'src/tag/entities/tag-without-parent-and-children.entity';
+import { ContactHistoryService } from './contact-history.service';
 import { CreateContactTagDto } from './dto/create-contact-tag.dto';
 import { RemoveContactTagDto } from './dto/remove-contact-tag.dto';
-import { HistoryService } from './history.service';
 
 @Injectable()
 export class ContactTagService {
   constructor(
     private readonly prismaService: PrismaService,
-    private readonly historyService: HistoryService,
+    private readonly contactHistoryService: ContactHistoryService,
   ) {}
 
   async create(
     projectId: number,
     createContactTagDto: CreateContactTagDto,
   ): Promise<TagWithoutParentAndChildren> {
-    const tag = await this.prismaService.contactTag.create({
+    const contactTag = await this.prismaService.contactTag.create({
       data: {
         contact: {
           connect: {
@@ -41,7 +41,7 @@ export class ContactTagService {
       },
     });
 
-    await this.historyService.create(projectId, {
+    await this.contactHistoryService.create(projectId, {
       contactId: createContactTagDto.contactId,
       eventType: HistoryEventType.Update,
       payload: {
@@ -49,7 +49,7 @@ export class ContactTagService {
       },
     });
 
-    return tag.tag;
+    return contactTag.tag;
   }
 
   findAll(
@@ -74,7 +74,7 @@ export class ContactTagService {
     projectId: number,
     removeContactTagDto: RemoveContactTagDto,
   ): Promise<TagWithoutParentAndChildren> {
-    const tag = await this.prismaService.contactTag.delete({
+    const contactTag = await this.prismaService.contactTag.delete({
       where: {
         tagId_contactId: removeContactTagDto,
       },
@@ -83,7 +83,7 @@ export class ContactTagService {
       },
     });
 
-    await this.historyService.create(projectId, {
+    await this.contactHistoryService.create(projectId, {
       contactId: removeContactTagDto.contactId,
       eventType: HistoryEventType.Update,
       payload: {
@@ -91,6 +91,6 @@ export class ContactTagService {
       },
     });
 
-    return tag.tag;
+    return contactTag.tag;
   }
 }

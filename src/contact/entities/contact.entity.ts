@@ -19,12 +19,6 @@ export class Contact implements Prisma.Contact {
 
   status: Prisma.ContactStatus;
 
-  telegramId: string | null;
-
-  webchatId: string | null;
-
-  whatsappId: string | null;
-
   @Type(() => AssignedTo)
   assignedTo: AssignedTo | null;
 
@@ -32,14 +26,14 @@ export class Contact implements Prisma.Contact {
 
   resolved: boolean;
 
+  @Type(() => ContactTag)
+  tags: ContactTag[];
+
   @Type(() => CustomField)
   customFields: CustomField[];
 
   @Type(() => Chat)
   chats: Chat[];
-
-  @Type(() => ContactTag)
-  tags: ContactTag[];
 
   @Exclude()
   createdAt: Date;

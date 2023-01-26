@@ -1,21 +1,11 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import {
-  AssigneeType,
-  ContactStatus,
-  HistoryEventType,
-  PrismaPromise,
-} from '@prisma/client';
+import { ContactStatus, HistoryEventType, PrismaPromise } from '@prisma/client';
 import { PrismaService } from 'src/prisma.service';
-import { CreateChatForContactDto } from './dto/create-chat-for-contact.dto';
-import { CreateContactForChatDto } from './dto/create-contact-for-chat.dto';
 import { CreateContactDto } from './dto/create-contact.dto';
-import { FindAllContactsForUserDto } from './dto/find-all-contacts-for-user.dto';
 import { FindAllContactsDto } from './dto/find-all-contacts.dto';
-import { FindOneContactForChatDto } from './dto/find-one-contact-for-chat.dto';
 import { ImportContactsDto } from './dto/import-contacts.dto';
 import { UpdateContactDto } from './dto/update-contact.dto';
 import { Contact } from './entities/contact.entity';
-import { CountAllContacts } from './entities/count-all-contacts.entity';
 
 @Injectable()
 export class ContactService {
@@ -36,13 +26,20 @@ export class ContactService {
 
   create(
     projectId: number,
-    createContactDto: CreateContactDto,
+    { tags, ...createContactDto }: CreateContactDto,
   ): PrismaPromise<Contact> {
     return this.prismaService.contact.create({
       data: {
         projectId,
         status: ContactStatus.Open,
         ...createContactDto,
+        tags: tags
+          ? {
+              create: tags.map((tagId) => ({
+                tagId,
+              })),
+            }
+          : undefined,
         history: {
           create: {
             eventType: HistoryEventType.Create,
@@ -62,83 +59,6 @@ export class ContactService {
     });
   }
 
-  async createForChat(
-    projectId: number,
-    { chatId, ...createContactDto }: CreateContactForChatDto,
-  ): Promise<Contact> {
-    const { contact, ...chat } = await this.prismaService.chat.upsert({
-      where: {
-        id: chatId,
-      },
-      create: {
-        id: chatId,
-        contact: {
-          create: {
-            projectId,
-            status: ContactStatus.Open,
-            ...createContactDto,
-            history: {
-              create: {
-                eventType: HistoryEventType.Create,
-              },
-            },
-          },
-        },
-      },
-      update: {
-        contact: {
-          update: {
-            ...createContactDto,
-            status: ContactStatus.Open,
-            deletedAt: null,
-            updatedAt: new Date(),
-          },
-        },
-      },
-      include: {
-        contact: {
-          include: {
-            assignedTo: true,
-            customFields: true,
-            tags: {
-              include: {
-                tag: true,
-              },
-            },
-          },
-        },
-      },
-    });
-
-    return {
-      ...contact,
-      chats: [chat],
-    };
-  }
-
-  async createChatFor(
-    projectId: number,
-    createChatForContactDto: CreateChatForContactDto,
-  ): Promise<boolean> {
-    await this.prismaService.contact.update({
-      where: {
-        projectId_id: {
-          projectId,
-          id: createChatForContactDto.id,
-        },
-      },
-      data: {
-        chats: {
-          create: {
-            id: createChatForContactDto.chatId,
-          },
-        },
-      },
-    });
-
-    return true;
-  }
-
   findAll(
     projectId: number,
     findAllContactsDto: FindAllContactsDto,
@@ -152,27 +72,15 @@ export class ContactService {
             ? undefined
             : [
                 {
-                  telegramId: {
-                    contains: findAllContactsDto.query,
-                    mode: 'insensitive',
-                  },
+                  name: findAllContactsDto.query,
                 },
                 {
-                  webchatId: {
-                    contains: findAllContactsDto.query,
-                    mode: 'insensitive',
-                  },
-                },
-                {
-                  whatsappId: {
-                    contains: findAllContactsDto.query,
-                    mode: 'insensitive',
-                  },
-                },
-                {
-                  name: {
-                    contains: findAllContactsDto.query,
-                    mode: 'insensitive',
+                  chats: {
+                    some: {
+                      accountId: {
+                        contains: findAllContactsDto.query,
+                      },
+                    },
                   },
                 },
               ],
@@ -188,79 +96,6 @@ export class ContactService {
             },
       skip: findAllContactsDto.cursor == null ? undefined : 1,
       take: findAllContactsDto.take ?? undefined,
-      include: {
-        assignedTo: true,
-        customFields: true,
-        tags: {
-          include: {
-            tag: true,
-          },
-        },
-        chats: true,
-      },
-    });
-  }
-
-  findAllForUser(
-    projectId: number,
-    userId: number,
-    findAllContactsForUserDto: FindAllContactsForUserDto,
-  ): Promise<Contact[]> {
-    return this.prismaService.contact.findMany({
-      where: {
-        projectId,
-        assignedTo:
-          findAllContactsForUserDto.assignedTo === userId
-            ? {
-                id: findAllContactsForUserDto.assignedTo,
-                type: AssigneeType.User,
-              }
-            : {
-                is: null,
-              },
-        status: findAllContactsForUserDto.status,
-        deletedAt: null,
-      },
-      orderBy: {
-        id: 'desc',
-      },
-      cursor:
-        findAllContactsForUserDto.cursor == null
-          ? undefined
-          : {
-              id: findAllContactsForUserDto.cursor,
-            },
-      skip: findAllContactsForUserDto.cursor == null ? undefined : 1,
-      take: findAllContactsForUserDto.take ?? undefined,
-      include: {
-        assignedTo: true,
-        customFields: true,
-        tags: {
-          include: {
-            tag: true,
-          },
-        },
-        chats: true,
-      },
-    });
-  }
-
-  findOneForChat(
-    projectId: number,
-    findOneContactForChatDto: FindOneContactForChatDto,
-  ): Promise<Contact[]> {
-    return this.prismaService.contact.findMany({
-      where: {
-        projectId,
-        chats: {
-          some: {
-            id: {
-              in: findOneContactForChatDto.ids,
-            },
-          },
-        },
-        deletedAt: null,
-      },
       include: {
         assignedTo: true,
         customFields: true,
@@ -413,36 +248,5 @@ export class ContactService {
         chats: true,
       },
     });
-  }
-
-  async countAllForUser(
-    projectId: number,
-    userId: number,
-  ): Promise<CountAllContacts> {
-    const [assigned, unassigned] = await this.prismaService.$transaction([
-      this.prismaService.contact.count({
-        where: {
-          projectId,
-          assignedTo: {
-            id: userId,
-          },
-          status: ContactStatus.Open,
-          deletedAt: null,
-        },
-      }),
-      this.prismaService.contact.count({
-        where: {
-          projectId,
-          assignedTo: null,
-          status: ContactStatus.Open,
-          deletedAt: null,
-        },
-      }),
-    ]);
-
-    return {
-      assigned,
-      unassigned,
-    };
   }
 }

@@ -1,7 +1,7 @@
 import { AssigneeType } from '@prisma/client';
 import { IsEnum, IsInt, IsOptional } from 'class-validator';
 
-export class UpdateAssignedToDto {
+export class CreateAssignedToDto {
   @IsInt()
   id: number;
 

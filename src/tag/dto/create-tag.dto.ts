@@ -8,11 +8,12 @@ import {
 } from 'class-validator';
 
 export class CreateTagDto {
-  @Transform(({ value }) => value.trim())
+  @Transform(({ value }) => value?.trim())
   @IsString()
   @IsNotEmpty()
   name: string;
 
+  @Transform(({ value }) => value?.trim())
   @IsOptional()
   @IsString()
   description?: string;

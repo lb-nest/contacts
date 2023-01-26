@@ -1,13 +1,5 @@
-import {
-  Controller,
-  ParseIntPipe,
-  UseGuards,
-  UseInterceptors,
-} from '@nestjs/common';
+import { Controller, ParseIntPipe, UseInterceptors } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
-import { Auth } from 'src/auth/auth.decorator';
-import { BearerAuthGuard } from 'src/auth/bearer-auth.guard';
-import { TokenPayload } from 'src/auth/entities/token-payload.entity';
 import { PlainToClassInterceptor } from 'src/shared/interceptors/plain-to-class.interceptor';
 import { CreateTagDto } from './dto/create-tag.dto';
 import { UpdateTagDto } from './dto/update-tag.dto';
@@ -18,50 +10,45 @@ import { TagService } from './tag.service';
 export class TagController {
   constructor(private readonly tagService: TagService) {}
 
-  @MessagePattern('tags.create')
-  @UseGuards(BearerAuthGuard)
+  @MessagePattern('createTag')
   @UseInterceptors(new PlainToClassInterceptor(Tag))
   create(
-    @Auth() auth: TokenPayload,
-    @Payload('payload') createTagDto: CreateTagDto,
+    @Payload('projectId', ParseIntPipe) projectId: number,
+    @Payload() createTagDto: CreateTagDto,
   ) {
-    return this.tagService.create(auth.project.id, createTagDto);
+    return this.tagService.create(projectId, createTagDto);
   }
 
-  @MessagePattern('tags.findAll')
-  @UseGuards(BearerAuthGuard)
+  @MessagePattern('findAllTags')
   @UseInterceptors(new PlainToClassInterceptor(Tag))
-  findAll(@Auth() auth: TokenPayload) {
-    return this.tagService.findAll(auth.project.id);
+  findAll(@Payload('projectId', ParseIntPipe) projectId: number) {
+    return this.tagService.findAll(projectId);
   }
 
-  @MessagePattern('tags.findOne')
-  @UseGuards(BearerAuthGuard)
+  @MessagePattern('findOneTag')
   @UseInterceptors(new PlainToClassInterceptor(Tag))
   findOne(
-    @Auth() auth: TokenPayload,
-    @Payload('payload', ParseIntPipe) id: number,
+    @Payload('projectId', ParseIntPipe) projectId: number,
+    @Payload('id', ParseIntPipe) id: number,
   ) {
-    return this.tagService.findOne(auth.project.id, id);
+    return this.tagService.findOne(projectId, id);
   }
 
-  @MessagePattern('tags.update')
-  @UseGuards(BearerAuthGuard)
+  @MessagePattern('updateTag')
   @UseInterceptors(new PlainToClassInterceptor(Tag))
   update(
-    @Auth() auth: TokenPayload,
-    @Payload('payload') updateTagDto: UpdateTagDto,
+    @Payload('projectId', ParseIntPipe) projectId: number,
+    @Payload() updateTagDto: UpdateTagDto,
   ) {
-    return this.tagService.update(auth.project.id, updateTagDto);
+    return this.tagService.update(projectId, updateTagDto);
   }
 
-  @MessagePattern('tags.remove')
-  @UseGuards(BearerAuthGuard)
+  @MessagePattern('removeTag')
   @UseInterceptors(new PlainToClassInterceptor(Tag))
   remove(
-    @Auth() auth: TokenPayload,
-    @Payload('payload', ParseIntPipe) id: number,
+    @Payload('projectId', ParseIntPipe) projectId: number,
+    @Payload('id', ParseIntPipe) id: number,
   ) {
-    return this.tagService.remove(auth.project.id, id);
+    return this.tagService.remove(projectId, id);
   }
 }

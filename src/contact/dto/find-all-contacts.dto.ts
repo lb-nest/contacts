@@ -9,6 +9,11 @@ import {
 
 export class FindAllContactsDto {
   @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  query?: string;
+
+  @IsOptional()
   @IsInt()
   @Min(1)
   cursor?: number;
@@ -18,9 +23,4 @@ export class FindAllContactsDto {
   @Min(1)
   @Max(100)
   take?: number;
-
-  @IsOptional()
-  @IsString()
-  @IsNotEmpty()
-  query?: string;
 }

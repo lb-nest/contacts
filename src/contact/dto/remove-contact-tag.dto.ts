@@ -1,3 +1,9 @@
-import { CreateContactTagDto } from './create-contact-tag.dto';
+import { IsInt } from 'class-validator';
 
-export class RemoveContactTagDto extends CreateContactTagDto {}
+export class RemoveContactTagDto {
+  @IsInt()
+  contactId: number;
+
+  @IsInt()
+  tagId: number;
+}

@@ -1,208 +1,200 @@
-import {
-  Body,
-  Controller,
-  ParseIntPipe,
-  UseGuards,
-  UseInterceptors,
-} from '@nestjs/common';
+import { Controller, ParseIntPipe, UseInterceptors } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
-import { Auth } from 'src/auth/auth.decorator';
-import { BearerAuthGuard } from 'src/auth/bearer-auth.guard';
-import { TokenPayload } from 'src/auth/entities/token-payload.entity';
 import { PlainToClassInterceptor } from 'src/shared/interceptors/plain-to-class.interceptor';
-import { TagWithoutParentAndChildren } from '../tag/entities/tag-without-parent-and-children.entity';
+import { TagWithoutParentAndChildren } from 'src/tag/entities/tag-without-parent-and-children.entity';
+import { ContactAssignedToService } from './contact-assigned-to.service';
+import { ContactHistoryService } from './contact-history.service';
 import { ContactTagService } from './contact-tag.service';
 import { ContactService } from './contact.service';
-import { CreateChatForContactDto } from './dto/create-chat-for-contact.dto';
-import { CreateContactForChatDto } from './dto/create-contact-for-chat.dto';
+import { CountAllContactsAssignedToDto } from './dto/count-all-contacts-assigned-to.dto';
+import { CreateContactHistoryDto } from './dto/create-contact-history.dto';
 import { CreateContactTagDto } from './dto/create-contact-tag.dto';
 import { CreateContactDto } from './dto/create-contact.dto';
-import { CreateHistoryDto } from './dto/create-history.dto';
-import { FindAllContactsForUserDto } from './dto/find-all-contacts-for-user.dto';
+import { FindAllContactsAssignedToDto } from './dto/find-all-contacts-assigned-to.dto';
 import { FindAllContactsDto } from './dto/find-all-contacts.dto';
-import { FindOneContactForChatDto } from './dto/find-one-contact-for-chat.dto';
 import { ImportContactsDto } from './dto/import-contacts.dto';
 import { RemoveContactTagDto } from './dto/remove-contact-tag.dto';
 import { UpdateContactDto } from './dto/update-contact.dto';
-import { Contact } from './entities/contact.entity';
-import { CountAllContacts } from './entities/count-all-contacts.entity';
 import { History } from './entities/history.entity';
-import { HistoryService } from './history.service';
+import { Contact } from './entities/contact.entity';
+import { CountAllContactsAssignedTo } from './entities/count-all-contacts-assigned-to.entity';
+import { ContactChatService } from './contact-chat.service';
 
 @Controller()
 export class ContactController {
   constructor(
+    private readonly contactAssignedToService: ContactAssignedToService,
+    private readonly contactChatService: ContactChatService,
+    private readonly contactHistoryService: ContactHistoryService,
     private readonly contactTagService: ContactTagService,
     private readonly contactService: ContactService,
-    private readonly historyService: HistoryService,
   ) {}
 
-  @MessagePattern('contacts.import')
-  @UseGuards(BearerAuthGuard)
+  @MessagePattern('importContacts')
   @UseInterceptors(new PlainToClassInterceptor(Contact))
   import(
-    @Auth() auth: TokenPayload,
-    @Body('payload') importContacsDto: ImportContactsDto,
+    @Payload('projectId', ParseIntPipe) projectId: number,
+    @Payload() importContacsDto: ImportContactsDto,
   ): Promise<boolean> {
-    return this.contactService.import(auth.project.id, importContacsDto);
+    return this.contactService.import(projectId, importContacsDto);
   }
 
-  @MessagePattern('contacts.create')
-  @UseGuards(BearerAuthGuard)
+  @MessagePattern('createContact')
   @UseInterceptors(new PlainToClassInterceptor(Contact))
   create(
-    @Auth() auth: TokenPayload,
-    @Payload('payload') createContactDto: CreateContactDto,
+    @Payload('projectId', ParseIntPipe) projectId: number,
+    @Payload() createContactDto: CreateContactDto,
   ): Promise<Contact> {
-    return this.contactService.create(auth.project.id, createContactDto);
+    return this.contactService.create(projectId, createContactDto);
   }
 
-  @MessagePattern('contacts.createForChat')
-  @UseGuards(BearerAuthGuard)
-  @UseInterceptors(new PlainToClassInterceptor(Contact))
-  createForChat(
-    @Auth() auth: TokenPayload,
-    @Payload('payload') createContactForChatDto: CreateContactForChatDto,
-  ): Promise<Contact> {
-    return this.contactService.createForChat(
-      auth.project.id,
-      createContactForChatDto,
-    );
-  }
-
-  @MessagePattern('contacts.createChatFor')
-  @UseGuards(BearerAuthGuard)
-  createChat(
-    @Auth() auth: TokenPayload,
-    @Payload('payload') createChatForContactDto: CreateChatForContactDto,
-  ): Promise<boolean> {
-    return this.contactService.createChatFor(
-      auth.project.id,
-      createChatForContactDto,
-    );
-  }
-
-  @MessagePattern('contacts.findAll')
-  @UseGuards(BearerAuthGuard)
+  @MessagePattern('findAllContacts')
   @UseInterceptors(new PlainToClassInterceptor(Contact))
   findAll(
-    @Auth() auth: TokenPayload,
-    @Payload('payload') findAllContactsDto: FindAllContactsDto,
+    @Payload('projectId', ParseIntPipe) projectId: number,
+    @Payload() findAllContactsDto: FindAllContactsDto,
   ): Promise<Contact[]> {
-    return this.contactService.findAll(auth.project.id, findAllContactsDto);
+    return this.contactService.findAll(projectId, findAllContactsDto);
   }
 
-  @MessagePattern('contacts.findAllForUser')
-  @UseGuards(BearerAuthGuard)
-  @UseInterceptors(new PlainToClassInterceptor(Contact))
-  findAllForUser(
-    @Auth() auth: TokenPayload,
-    @Payload('payload') findAllContactForUserDto: FindAllContactsForUserDto,
-  ): Promise<Contact[]> {
-    return this.contactService.findAllForUser(
-      auth.project.id,
-      auth.id,
-      findAllContactForUserDto,
-    );
-  }
-
-  @MessagePattern('contacts.findOneForChat')
-  @UseGuards(BearerAuthGuard)
-  @UseInterceptors(new PlainToClassInterceptor(Contact))
-  findAllForChat(
-    @Auth() auth: TokenPayload,
-    @Payload('payload') findOneContactForChatDto: FindOneContactForChatDto,
-  ): Promise<Contact[]> {
-    return this.contactService.findOneForChat(
-      auth.project.id,
-      findOneContactForChatDto,
-    );
-  }
-
-  @MessagePattern('contacts.findOne')
-  @UseGuards(BearerAuthGuard)
+  @MessagePattern('findOneContact')
   @UseInterceptors(new PlainToClassInterceptor(Contact))
   findOne(
-    @Auth() auth: TokenPayload,
-    @Payload('payload', ParseIntPipe) id: number,
+    @Payload('projectId', ParseIntPipe) projectId: number,
+    @Payload('id', ParseIntPipe) id: number,
   ): Promise<Contact> {
-    return this.contactService.findOne(auth.project.id, id);
+    return this.contactService.findOne(projectId, id);
   }
 
-  @MessagePattern('contacts.update')
-  @UseGuards(BearerAuthGuard)
+  @MessagePattern('updateContact')
   @UseInterceptors(new PlainToClassInterceptor(Contact))
   update(
-    @Auth() auth: TokenPayload,
-    @Payload('payload') updateContactDto: UpdateContactDto,
+    @Payload('projectId', ParseIntPipe) projectId: number,
+    @Payload() updateContactDto: UpdateContactDto,
   ): Promise<Contact> {
-    return this.contactService.update(auth.project.id, updateContactDto);
+    return this.contactService.update(projectId, updateContactDto);
   }
 
-  @MessagePattern('contacts.remove')
-  @UseGuards(BearerAuthGuard)
+  @MessagePattern('removeContact')
   @UseInterceptors(new PlainToClassInterceptor(Contact))
   remove(
-    @Auth() auth: TokenPayload,
-    @Payload('payload', ParseIntPipe) id: number,
+    @Payload('projectId', ParseIntPipe) projectId: number,
+    @Payload('id', ParseIntPipe) id: number,
   ): Promise<Contact> {
-    return this.contactService.remove(auth.project.id, Number(id));
+    return this.contactService.remove(projectId, id);
   }
 
-  @MessagePattern('contacts.createHistory')
-  @UseGuards(BearerAuthGuard)
-  @UseInterceptors(new PlainToClassInterceptor(History))
+  @MessagePattern('findAllContactsAssignedTo')
+  @UseInterceptors(new PlainToClassInterceptor(Contact))
+  findAllAssignedTo(
+    @Payload('projectId', ParseIntPipe) projectId: number,
+    @Payload() findAllContactsAssignedToDto: FindAllContactsAssignedToDto,
+  ): Promise<Contact[]> {
+    return this.contactAssignedToService.findAll(
+      projectId,
+      findAllContactsAssignedToDto,
+    );
+  }
+
+  @MessagePattern('countAllContactsAssignedTo')
+  @UseInterceptors(new PlainToClassInterceptor(Contact))
+  countAllAssignedTo(
+    @Payload('projectId', ParseIntPipe) projectId: number,
+    @Payload() countAllContactsAssignedToDto: CountAllContactsAssignedToDto,
+  ): Promise<CountAllContactsAssignedTo> {
+    return this.contactAssignedToService.countAll(
+      projectId,
+      countAllContactsAssignedToDto,
+    );
+  }
+
+  @MessagePattern('createContactForChat')
+  @UseInterceptors(new PlainToClassInterceptor(Contact))
+  createForChat(
+    @Payload('projectId', ParseIntPipe) projectId: number,
+    @Payload('channelId', ParseIntPipe) channelId: number,
+    @Payload('accountId') accountId: string,
+    @Payload() createContactDto: CreateContactDto,
+  ): Promise<Contact> {
+    return this.contactChatService.createForChat(
+      projectId,
+      channelId,
+      accountId,
+      createContactDto,
+    );
+  }
+
+  @MessagePattern('createChatForContact')
+  @UseInterceptors(new PlainToClassInterceptor(Contact))
+  createChatFor(
+    @Payload('projectId', ParseIntPipe) projectId: number,
+    @Payload('contactId', ParseIntPipe) contactId: number,
+    @Payload('channelId', ParseIntPipe) channelId: number,
+    @Payload('accountId') accountId: string,
+  ): Promise<Contact> {
+    return this.contactChatService.createChatFor(
+      projectId,
+      contactId,
+      channelId,
+      accountId,
+    );
+  }
+
+  @MessagePattern('findOneContactWithChat')
+  @UseInterceptors(new PlainToClassInterceptor(Contact))
+  findOneContactWithChat(
+    @Payload('projectId', ParseIntPipe) projectId: number,
+    @Payload('channelId', ParseIntPipe) channelId: number,
+    @Payload('accountId') accountId: string,
+  ): Promise<Contact> {
+    return this.contactChatService.findOne(projectId, channelId, accountId);
+  }
+
+  @MessagePattern('createContactHistory')
+  @UseInterceptors(new PlainToClassInterceptor(Contact))
   createHistory(
-    @Auth() auth: TokenPayload,
-    @Payload('payload') createHistoryDto: CreateHistoryDto,
+    @Payload('projectId', ParseIntPipe) projectId: number,
+    @Payload() createContactHistoryDto: CreateContactHistoryDto,
   ): Promise<History> {
-    return this.historyService.create(auth.project.id, createHistoryDto);
+    return this.contactHistoryService.create(
+      projectId,
+      createContactHistoryDto,
+    );
   }
 
-  @MessagePattern('contacts.findAllHistory')
-  @UseGuards(BearerAuthGuard)
-  @UseInterceptors(new PlainToClassInterceptor(History))
+  @MessagePattern('findAllContactHistory')
+  @UseInterceptors(new PlainToClassInterceptor(Contact))
   findAllHistory(
-    @Auth() auth: TokenPayload,
-    @Payload('payload', ParseIntPipe) contactId: number,
+    @Payload('projectId', ParseIntPipe) projectId: number,
+    @Payload('contactId', ParseIntPipe) contactId: number,
   ): Promise<History[]> {
-    return this.historyService.findAll(auth.project.id, contactId);
+    return this.contactHistoryService.findAll(projectId, contactId);
   }
 
-  @MessagePattern('contacts.createContactTag')
-  @UseGuards(BearerAuthGuard)
-  @UseInterceptors(new PlainToClassInterceptor(TagWithoutParentAndChildren))
+  @MessagePattern('createContactTag')
+  @UseInterceptors(new PlainToClassInterceptor(Contact))
   createContactTag(
-    @Auth() auth: TokenPayload,
-    @Payload('payload') createContactTagDto: CreateContactTagDto,
+    @Payload('projectId', ParseIntPipe) projectId: number,
+    @Payload() createContactTagDto: CreateContactTagDto,
   ): Promise<TagWithoutParentAndChildren> {
-    return this.contactTagService.create(auth.project.id, createContactTagDto);
+    return this.contactTagService.create(projectId, createContactTagDto);
   }
 
-  @MessagePattern('contacts.findAllContactTags')
-  @UseGuards(BearerAuthGuard)
-  @UseInterceptors(new PlainToClassInterceptor(TagWithoutParentAndChildren))
+  @MessagePattern('findAllContactTags')
+  @UseInterceptors(new PlainToClassInterceptor(Contact))
   findAllContactTags(
-    @Auth() auth: TokenPayload,
-    @Payload('payload', ParseIntPipe) contactId: number,
+    @Payload('projectId', ParseIntPipe) projectId: number,
+    @Payload('contactId', ParseIntPipe) contactId: number,
   ): Promise<TagWithoutParentAndChildren[]> {
-    return this.contactTagService.findAll(auth.project.id, contactId);
+    return this.contactTagService.findAll(projectId, contactId);
   }
 
-  @MessagePattern('contacts.removeContactTag')
-  @UseGuards(BearerAuthGuard)
-  @UseInterceptors(new PlainToClassInterceptor(TagWithoutParentAndChildren))
+  @MessagePattern('removeContactTag')
+  @UseInterceptors(new PlainToClassInterceptor(Contact))
   removeContactTag(
-    @Auth() auth: TokenPayload,
-    @Payload('payload') removeContactTagDto: RemoveContactTagDto,
+    @Payload('projectId', ParseIntPipe) projectId: number,
+    @Payload() removeContactTagDto: RemoveContactTagDto,
   ): Promise<TagWithoutParentAndChildren> {
-    return this.contactTagService.remove(auth.project.id, removeContactTagDto);
-  }
-
-  @MessagePattern('contacts.countAll')
-  @UseGuards(BearerAuthGuard)
-  @UseInterceptors(new PlainToClassInterceptor(CountAllContacts))
-  countAll(@Auth() auth: TokenPayload): Promise<CountAllContacts> {
-    return this.contactService.countAllForUser(auth.project.id, auth.id);
+    return this.contactTagService.remove(projectId, removeContactTagDto);
   }
 }

@@ -8,20 +8,7 @@ import {
 } from 'class-validator';
 
 export class CreateContactDto {
-  @IsOptional()
-  @IsString()
-  telegramId?: string;
-
-  @Transform(({ value }) => value.replace(/[^0-9]/gim, ''))
-  @IsOptional()
-  @IsString()
-  whatsappId?: string;
-
-  @IsOptional()
-  @IsString()
-  webchatId?: string;
-
-  @Transform(({ value }) => value.trim())
+  @Transform(({ value }) => value?.trim())
   @IsString()
   @IsNotEmpty()
   name: string;
@@ -30,6 +17,7 @@ export class CreateContactDto {
   @IsUrl()
   avatarUrl?: string;
 
+  @Transform(({ value }) => value?.trim())
   @IsOptional()
   @IsString()
   notes?: string;

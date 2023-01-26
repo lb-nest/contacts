@@ -12,6 +12,4 @@ export class History implements Prisma.History {
   payload: any;
 
   createdAt: Date;
-
-  updatedAt: Date;
 }
