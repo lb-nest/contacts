@@ -6,6 +6,7 @@ import { ContactHistoryService } from './contact-history.service';
 import { ContactTagService } from './contact-tag.service';
 import { ContactController } from './contact.controller';
 import { ContactService } from './contact.service';
+import { ContactMailingService } from './contact-mailing.service';
 
 @Module({
   controllers: [ContactController],
@@ -16,6 +17,7 @@ import { ContactService } from './contact.service';
     ContactHistoryService,
     ContactTagService,
     ContactService,
+    ContactMailingService,
   ],
 })
 export class ContactModule {}

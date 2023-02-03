@@ -3,7 +3,9 @@ import { MessagePattern, Payload } from '@nestjs/microservices';
 import { PlainToClassInterceptor } from 'src/shared/interceptors/plain-to-class.interceptor';
 import { TagWithoutParentAndChildren } from 'src/tag/entities/tag-without-parent-and-children.entity';
 import { ContactAssignedToService } from './contact-assigned-to.service';
+import { ContactChatService } from './contact-chat.service';
 import { ContactHistoryService } from './contact-history.service';
+import { ContactMailingService } from './contact-mailing.service';
 import { ContactTagService } from './contact-tag.service';
 import { ContactService } from './contact.service';
 import { CountAllContactsAssignedToDto } from './dto/count-all-contacts-assigned-to.dto';
@@ -11,14 +13,14 @@ import { CreateContactHistoryDto } from './dto/create-contact-history.dto';
 import { CreateContactTagDto } from './dto/create-contact-tag.dto';
 import { CreateContactDto } from './dto/create-contact.dto';
 import { FindAllContactsAssignedToDto } from './dto/find-all-contacts-assigned-to.dto';
+import { FindAllContactsForMailing } from './dto/find-all-contacts-for-mailing.dto';
 import { FindAllContactsDto } from './dto/find-all-contacts.dto';
 import { ImportContactsDto } from './dto/import-contacts.dto';
 import { RemoveContactTagDto } from './dto/remove-contact-tag.dto';
 import { UpdateContactDto } from './dto/update-contact.dto';
-import { History } from './entities/history.entity';
 import { Contact } from './entities/contact.entity';
 import { CountAllContactsAssignedTo } from './entities/count-all-contacts-assigned-to.entity';
-import { ContactChatService } from './contact-chat.service';
+import { History } from './entities/history.entity';
 
 @Controller()
 export class ContactController {
@@ -26,6 +28,7 @@ export class ContactController {
     private readonly contactAssignedToService: ContactAssignedToService,
     private readonly contactChatService: ContactChatService,
     private readonly contactHistoryService: ContactHistoryService,
+    private readonly contactMailingService: ContactMailingService,
     private readonly contactTagService: ContactTagService,
     private readonly contactService: ContactService,
   ) {}
@@ -169,6 +172,18 @@ export class ContactController {
     @Payload('contactId', ParseIntPipe) contactId: number,
   ): Promise<History[]> {
     return this.contactHistoryService.findAll(projectId, contactId);
+  }
+
+  @MessagePattern('findAllContactsForMailing')
+  @UseInterceptors(new PlainToClassInterceptor(Contact))
+  findAllForMailing(
+    @Payload('projectId', ParseIntPipe) projectId: number,
+    @Payload() findAllContactsForMailingDto: FindAllContactsForMailing,
+  ): Promise<any[]> {
+    return this.contactMailingService.findAll(
+      projectId,
+      findAllContactsForMailingDto,
+    );
   }
 
   @MessagePattern('createContactTag')
