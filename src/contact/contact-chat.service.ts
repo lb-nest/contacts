@@ -14,71 +14,66 @@ export class ContactChatService {
     accountId: string,
     { tags = [], ...createContactDto }: CreateContactDto,
   ): Promise<Contact> {
-    try {
-      const chat = await this.prismaService.chat.upsert({
-        where: {
-          accountId_channelId: {
-            accountId,
-            channelId,
-          },
-        },
-        create: {
+    const chat = await this.prismaService.chat.upsert({
+      where: {
+        accountId_channelId: {
           accountId,
           channelId,
-          contact: {
-            create: {
-              ...createContactDto,
-              projectId,
-              status: ContactStatus.Open,
-              tags: {
-                createMany: {
-                  data: tags?.map((tagId) => ({
-                    tagId,
-                  })),
-                },
+        },
+      },
+      create: {
+        accountId,
+        channelId,
+        contact: {
+          create: {
+            ...createContactDto,
+            projectId,
+            status: ContactStatus.Open,
+            tags: {
+              createMany: {
+                data: tags?.map((tagId) => ({
+                  tagId,
+                })),
               },
             },
           },
         },
-        update: {
-          contact: {
-            update: {
-              ...createContactDto,
-              projectId,
-              status: ContactStatus.Open,
-              tags: {
-                createMany: {
-                  data: tags.map((tagId) => ({
-                    tagId,
-                  })),
-                },
+      },
+      update: {
+        contact: {
+          update: {
+            ...createContactDto,
+            projectId,
+            status: ContactStatus.Open,
+            tags: {
+              createMany: {
+                data: tags.map((tagId) => ({
+                  tagId,
+                })),
               },
             },
           },
         },
-        include: {
-          contact: {
-            include: {
-              assignedTo: true,
-              customFields: true,
-              tags: {
-                include: {
-                  tag: true,
-                },
+      },
+      include: {
+        contact: {
+          include: {
+            assignedTo: true,
+            customFields: true,
+            tags: {
+              include: {
+                tag: true,
               },
             },
           },
         },
-      });
+      },
+    });
 
-      return {
-        ...chat.contact,
-        chats: [chat],
-      };
-    } catch (e) {
-      console.log(e);
-      throw e;
-    }
+    return {
+      ...chat.contact,
+      chats: [chat],
+    };
   }
 
   async createChatFor(
