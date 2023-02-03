@@ -46,7 +46,7 @@ enum ContactStatus {
 model Contact {
   id           Int           @id @default(autoincrement())
   projectId    Int
-  name         String
+  name         String        @default("")
   avatarUrl    String?
   notes        String        @default("")
   status       ContactStatus

@@ -1,17 +1,10 @@
 import { Transform } from 'class-transformer';
-import {
-  IsInt,
-  IsNotEmpty,
-  IsOptional,
-  IsString,
-  IsUrl,
-} from 'class-validator';
+import { IsInt, IsOptional, IsString, IsUrl } from 'class-validator';
 
 export class CreateContactDto {
-  @Transform(({ value }) => value?.trim())
   @IsString()
-  @IsNotEmpty()
-  name: string;
+  @IsOptional()
+  name?: string;
 
   @IsOptional()
   @IsUrl()
