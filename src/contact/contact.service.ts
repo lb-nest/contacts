@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { ContactStatus, HistoryEventType, PrismaPromise } from '@prisma/client';
+import { ContactStatus, HistoryEventType, Prisma } from '@prisma/client';
 import { PrismaService } from 'src/prisma.service';
 import { CreateContactDto } from './dto/create-contact.dto';
 import { FindAllContactsDto } from './dto/find-all-contacts.dto';
@@ -27,7 +27,7 @@ export class ContactService {
   create(
     projectId: number,
     { tags, ...createContactDto }: CreateContactDto,
-  ): PrismaPromise<Contact> {
+  ): Prisma.PrismaPromise<Contact> {
     return this.prismaService.contact.create({
       data: {
         projectId,

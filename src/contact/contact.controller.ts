@@ -1,6 +1,5 @@
-import { Controller, ParseIntPipe, UseInterceptors } from '@nestjs/common';
+import { Controller, ParseIntPipe, SerializeOptions } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
-import { PlainToClassInterceptor } from 'src/shared/interceptors/plain-to-class.interceptor';
 import { TagWithoutParentAndChildren } from 'src/tag/entities/tag-without-parent-and-children.entity';
 import { ContactAssignedToService } from './contact-assigned-to.service';
 import { ContactChatService } from './contact-chat.service';
@@ -34,7 +33,6 @@ export class ContactController {
   ) {}
 
   @MessagePattern('importContacts')
-  @UseInterceptors(new PlainToClassInterceptor(Contact))
   import(
     @Payload('projectId', ParseIntPipe) projectId: number,
     @Payload() importContacsDto: ImportContactsDto,
@@ -42,8 +40,10 @@ export class ContactController {
     return this.contactService.import(projectId, importContacsDto);
   }
 
+  @SerializeOptions({
+    type: Contact,
+  })
   @MessagePattern('createContact')
-  @UseInterceptors(new PlainToClassInterceptor(Contact))
   create(
     @Payload('projectId', ParseIntPipe) projectId: number,
     @Payload() createContactDto: CreateContactDto,
@@ -51,8 +51,10 @@ export class ContactController {
     return this.contactService.create(projectId, createContactDto);
   }
 
+  @SerializeOptions({
+    type: Contact,
+  })
   @MessagePattern('findAllContacts')
-  @UseInterceptors(new PlainToClassInterceptor(Contact))
   findAll(
     @Payload('projectId', ParseIntPipe) projectId: number,
     @Payload() findAllContactsDto: FindAllContactsDto,
@@ -60,8 +62,10 @@ export class ContactController {
     return this.contactService.findAll(projectId, findAllContactsDto);
   }
 
+  @SerializeOptions({
+    type: Contact,
+  })
   @MessagePattern('findOneContact')
-  @UseInterceptors(new PlainToClassInterceptor(Contact))
   findOne(
     @Payload('projectId', ParseIntPipe) projectId: number,
     @Payload('id', ParseIntPipe) id: number,
@@ -69,8 +73,10 @@ export class ContactController {
     return this.contactService.findOne(projectId, id);
   }
 
+  @SerializeOptions({
+    type: Contact,
+  })
   @MessagePattern('updateContact')
-  @UseInterceptors(new PlainToClassInterceptor(Contact))
   update(
     @Payload('projectId', ParseIntPipe) projectId: number,
     @Payload() updateContactDto: UpdateContactDto,
@@ -78,8 +84,10 @@ export class ContactController {
     return this.contactService.update(projectId, updateContactDto);
   }
 
+  @SerializeOptions({
+    type: Contact,
+  })
   @MessagePattern('removeContact')
-  @UseInterceptors(new PlainToClassInterceptor(Contact))
   remove(
     @Payload('projectId', ParseIntPipe) projectId: number,
     @Payload('id', ParseIntPipe) id: number,
@@ -87,8 +95,10 @@ export class ContactController {
     return this.contactService.remove(projectId, id);
   }
 
+  @SerializeOptions({
+    type: Contact,
+  })
   @MessagePattern('findAllContactsAssignedTo')
-  @UseInterceptors(new PlainToClassInterceptor(Contact))
   findAllAssignedTo(
     @Payload('projectId', ParseIntPipe) projectId: number,
     @Payload() findAllContactsAssignedToDto: FindAllContactsAssignedToDto,
@@ -99,8 +109,10 @@ export class ContactController {
     );
   }
 
+  @SerializeOptions({
+    type: CountAllContactsAssignedTo,
+  })
   @MessagePattern('countAllContactsAssignedTo')
-  @UseInterceptors(new PlainToClassInterceptor(Contact))
   countAllAssignedTo(
     @Payload('projectId', ParseIntPipe) projectId: number,
     @Payload() countAllContactsAssignedToDto: CountAllContactsAssignedToDto,
@@ -111,8 +123,10 @@ export class ContactController {
     );
   }
 
+  @SerializeOptions({
+    type: CountAllContactsAssignedTo,
+  })
   @MessagePattern('createContactForChat')
-  @UseInterceptors(new PlainToClassInterceptor(Contact))
   createForChat(
     @Payload('projectId', ParseIntPipe) projectId: number,
     @Payload('channelId', ParseIntPipe) channelId: number,
@@ -127,8 +141,10 @@ export class ContactController {
     );
   }
 
+  @SerializeOptions({
+    type: CountAllContactsAssignedTo,
+  })
   @MessagePattern('createChatForContact')
-  @UseInterceptors(new PlainToClassInterceptor(Contact))
   createChatFor(
     @Payload('projectId', ParseIntPipe) projectId: number,
     @Payload('contactId', ParseIntPipe) contactId: number,
@@ -143,8 +159,10 @@ export class ContactController {
     );
   }
 
+  @SerializeOptions({
+    type: CountAllContactsAssignedTo,
+  })
   @MessagePattern('findOneContactWithChat')
-  @UseInterceptors(new PlainToClassInterceptor(Contact))
   findOneContactWithChat(
     @Payload('projectId', ParseIntPipe) projectId: number,
     @Payload('channelId', ParseIntPipe) channelId: number,
@@ -153,8 +171,10 @@ export class ContactController {
     return this.contactChatService.findOne(projectId, channelId, accountId);
   }
 
+  @SerializeOptions({
+    type: History,
+  })
   @MessagePattern('createContactHistory')
-  @UseInterceptors(new PlainToClassInterceptor(Contact))
   createHistory(
     @Payload('projectId', ParseIntPipe) projectId: number,
     @Payload() createContactHistoryDto: CreateContactHistoryDto,
@@ -165,8 +185,10 @@ export class ContactController {
     );
   }
 
+  @SerializeOptions({
+    type: History,
+  })
   @MessagePattern('findAllContactHistory')
-  @UseInterceptors(new PlainToClassInterceptor(Contact))
   findAllHistory(
     @Payload('projectId', ParseIntPipe) projectId: number,
     @Payload('contactId', ParseIntPipe) contactId: number,
@@ -174,8 +196,10 @@ export class ContactController {
     return this.contactHistoryService.findAll(projectId, contactId);
   }
 
+  @SerializeOptions({
+    // type: Contact,
+  })
   @MessagePattern('findAllContactsForMailing')
-  @UseInterceptors(new PlainToClassInterceptor(Contact))
   findAllForMailing(
     @Payload('projectId', ParseIntPipe) projectId: number,
     @Payload() findAllContactsForMailingDto: FindAllContactsForMailing,
@@ -186,8 +210,10 @@ export class ContactController {
     );
   }
 
+  @SerializeOptions({
+    type: TagWithoutParentAndChildren,
+  })
   @MessagePattern('createContactTag')
-  @UseInterceptors(new PlainToClassInterceptor(Contact))
   createContactTag(
     @Payload('projectId', ParseIntPipe) projectId: number,
     @Payload() createContactTagDto: CreateContactTagDto,
@@ -195,8 +221,10 @@ export class ContactController {
     return this.contactTagService.create(projectId, createContactTagDto);
   }
 
+  @SerializeOptions({
+    type: TagWithoutParentAndChildren,
+  })
   @MessagePattern('findAllContactTags')
-  @UseInterceptors(new PlainToClassInterceptor(Contact))
   findAllContactTags(
     @Payload('projectId', ParseIntPipe) projectId: number,
     @Payload('contactId', ParseIntPipe) contactId: number,
@@ -204,8 +232,10 @@ export class ContactController {
     return this.contactTagService.findAll(projectId, contactId);
   }
 
+  @SerializeOptions({
+    type: TagWithoutParentAndChildren,
+  })
   @MessagePattern('removeContactTag')
-  @UseInterceptors(new PlainToClassInterceptor(Contact))
   removeContactTag(
     @Payload('projectId', ParseIntPipe) projectId: number,
     @Payload() removeContactTagDto: RemoveContactTagDto,
